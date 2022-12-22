@@ -1,13 +1,14 @@
-(ns wg-agent.subnet
+(ns wgctrl.utils.subnet
 	(:gen-class)
 	(:require [clojure.string :as str]))
 
 (defn mask 
   "Cuts mask of subnet from address"
   [subnet]
-  (->>
+  (->
     (str/split subnet #"/")
     last
+    (str/replace #"," "")
     (Integer/parseInt)))
 
 (defn addr 

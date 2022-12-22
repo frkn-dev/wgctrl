@@ -1,7 +1,9 @@
-(ns wg-agent.utils
+(ns wgctrl.utils.main
 	(:gen-class)
   (:require [clojure.java.io :as io]
-    [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]))
 
 (defn load-edn
   "Load edn from an io/reader source (filename or io/resource)."
@@ -15,15 +17,4 @@
       (printf "Error parsing edn file '%s': %s\n" source (.getMessage e)))))
 
 
-(defn ubuntu? 
-  "Returns true if Ubuntu, "
-  []
-  (try 
-    (if (= "Ubuntu" (-> (shell/sh "lsb_release" "-si") :out str/trim-newline ))
-      true
-      false)
-  (catch java.io.IOException e
-    false)))
-
-
-(defn uuid [] (java.util.UUID/randomUUID))
+(defn uuid [] (.toString (java.util.UUID/randomUUID)))

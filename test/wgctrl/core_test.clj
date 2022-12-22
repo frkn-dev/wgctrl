@@ -1,4 +1,4 @@
-(ns wg-agent.core-test
+(ns wgctrl.core-test
   (:require [clojure.test :refer :all]
             [wg-agent.core :refer :all]))
 

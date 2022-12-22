@@ -25,8 +25,6 @@ allowed_ipv6=$4
 peer_name=$5
 endpoint_port=$6
 
-
-
 # Check if the interface exists
 if ! wg show "$interface" &> /dev/null
 then
@@ -47,12 +45,6 @@ new_client_setup() {
 
     # Configure client in the server
 
-    echo wg set $interface peer \
-           $public_key\
-            allowed-ips "$allowed_ipv4, $allowed_ipv6"\
-            preshared-key psk.key\
-            endpoint $peer_ip:$endpoint_port
-
     wg set $interface peer \
            $(wg pubkey <<< "$key")\
             allowed-ips "$allowed_ipv4, $allowed_ipv6"\
@@ -66,16 +58,14 @@ echo "{:name $peer_name,
        :allowed-ips [$allowed_ipv4 $allowed_ipv6],
        :interface $interface,
        :endpoint $peer_ip:$endpoint_port,
-       :public-key $public_key, :dns $dns}"
-}
+       :public-key $public_key, 
+       :private-key $key,
+       :dns $dns}"
 
-gen_config(){
-    
-}
 
 new_client_setup
 
 # Generate a qr-code for the client configuration
 #qrencode -t UTF8 < $peer_name.conf
-
-echo "Success: added peer $public_key to $interface"
+exit 0
+#echo "Success: added peer $public_key to $interface"

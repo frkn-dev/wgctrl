@@ -1,4 +1,4 @@
-(ns wg-agent.ipcalc
+(ns wgctrl.utils.ipcalc
 	(:gen-class)
 	(:require [clojure.string :as str]))
 
@@ -46,6 +46,7 @@
         (if (> a' (Math/pow 2 32))
           nil
           (int->addr  a'))))
+
 
 (defn addr- 
   "Calculates range between 2 IP addresses "
