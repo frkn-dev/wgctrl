@@ -1,26 +1,17 @@
 (ns wgctrl.core
   (:gen-class)
-  (:require [org.httpkit.server :as httpkit]
-            [compojure.core :refer [defroutes GET]]
-            [compojure.route :as route]
-            [clojure.core.async :as async :refer [go go-loop <! >! chan]]
-            [clojure.java.shell :as shell]
-            [clojure.string :as str]
-            [clojure.edn :as edn]
-            [wgctrl.http.main :as http]
-            [wgctrl.utils.main :as utils]          
-            [wgctrl.cluster.model :as m]
-            [wgctrl.cluster.utils :as u]
-            [wgctrl.cluster.actions :as a]
+  (:require [wgctrl.cluster.model :as m]
+            [wgctrl.cluster.transforms :as t]
             [wgctrl.cluster.ssh :as ssh]
-            [wgctrl.cluster.checks :as checks]
-            [wgctrl.cluster.utils :as cutils]
-            [wgctrl.cluster.stat :as stat])
+            [wgctrl.http.main :as http]
+            [wgctrl.cluster.selectors :as s]
+            [wgctrl.cluster.keys :as keys]
+            [wgctrl.cluster.utils :as utils])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 
 (def config {:nodes [{:address "root@94.176.238.220" :location "dev" :dns "1.1.1.1"}
-                     {:address "root@45.91.8.110" :location "ru" :dns "1.1.1.1"}]})
+                     ]})
 
 
 (def d1 {:location "dv" :dns "1.1.1.1" :uuid "35d200ae-4a28-9592-201dc6358714", :default-interface "ens3", :interfaces 
@@ -51,11 +42,10 @@
 
 
 
-
 (defn -main []
    
        (reset! (.nodes m/cluster) [])
-       (doall (map #(a/node->cluster (m/node! (ssh/node-reg-data %)) m/cluster) (:nodes config)))
+       (doall (map #(t/node->cluster (m/node! (ssh/node-reg-data %)) m/cluster) (:nodes config)))
   
        (defonce server (atom nil))
        (http/stop-server server)
@@ -65,8 +55,12 @@
 (-main)
 
 
+(keys/generate-client (first @(.interfaces (first @(.nodes (-> m/cluster))))))
 
+(s/node-with-min-peers @(.nodes m/cluster) "dev")
 
+(s/nodes-by-location "dev" @(.nodes m/cluster))
 
-
+(utils/addr! 
+  (s/interface-with-min-peers (s/node-with-min-peers @(.nodes m/cluster) "dev")))
 

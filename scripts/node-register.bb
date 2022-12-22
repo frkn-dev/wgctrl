@@ -83,11 +83,25 @@
     (and (fs/exists? f)
          (> (fs/size f) 0))))
 
+(defn wg-iface-key [interface]
+  "Return PrivateKey of WG interface"
+  (->> 
+    (-> (str "/etc/wireguard/" interface ".conf") 
+        slurp
+        (str/split #"\n"))
+    (map #(str/split % #" "))
+    (filter (fn [x] (= (first x) "PrivateKey")))
+    first
+    last))
+
+
 (defn wg-settings [interface]
   {:name interface,
    :subnet (subnet interface),
-   :port (port interface)})
+   :port (port interface)
+   :key (wg-iface-key interface)})
 
+  
 
 (defn -main []
   (if (wg-installed?)

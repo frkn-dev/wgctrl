@@ -30,7 +30,7 @@
                              (-> x
                                  .allowed-ips 
                                  subnet/addr
-                                 ip/addr->int)) (:peers interface))
+                                 ip/addr->int)) @(.peers interface))
                      sort
                      (map #(ip/int->addr %)))]
 
@@ -40,3 +40,4 @@
                 :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
                                              a
                                              a')) (first addresses) (rest addresses))))))
+
