@@ -19,22 +19,25 @@
           ip (utils/addr! i)
           uuid (.toString (java.util.UUID/randomUUID))]
 
-          (ssh/peer! keys i ip)
+          (let [{:keys [err exit]} (ssh/peer! keys i ip)] 
 
-          (t/peer->interface (m/peer! [uuid
-                    "test" 
-                    (:psk keys) 
-                    (:pubkey keys) 
-                    (:key keys)
-                    (str ip "/32")]) i)
+            (if (= 0 exit) 
+                (do (t/peer->interface (m/peer! [uuid
+                                                "test" 
+                                                (:psk keys) 
+                                                (:pubkey keys) 
+                                                (:key keys)
+                                                (str ip "/32")]) i)
 
-            (json/generate-string {:interface {:address (str ip "/24") 
-                                               :key (:key keys) 
-                                               :dns "1.1.1.1"}
-                                   :peer {:pubkey (:pubkey keys)
-                                          :psk  (:psk keys) 
-                                          :allowed_ips "0.0.0.0/0"
-                                          :endpoint (.endpoint i) }})))
+                    (json/generate-string {:interface {:address (str ip "/24") 
+                                                       :key (:key keys) 
+                                                       :dns "1.1.1.1"}
+                                            :peer {:pubkey (:pubkey keys)
+                                                   :psk  (:psk keys) 
+                                                   :allowed_ips "0.0.0.0/0"
+                                                   :endpoint (.endpoint i) }}))
+                (json/generate-string {:err "Can't create peer" :message err})
+                ))))
 
 
 
