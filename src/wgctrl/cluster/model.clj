@@ -1,6 +1,5 @@
 (ns wgctrl.cluster.model
-	(:gen-class)
-	(:require [wgctrl.utils.main :as u]
+  (:require [wgctrl.utils.main :as u]
             [wgctrl.cluster.transforms :as t]))
 
 (defrecord Interface [name subnet endpoint port key peers])
@@ -8,16 +7,16 @@
 (defrecord Node [uuid hostname interfaces dns location status])
 (defrecord Cluster [uuid nodes type])
 
-(defn cluster! 
+(defn cluster!
   "Creates Cluster instance"
   ([]
-    (->Cluster (u/uuid) (atom []) "standard" ))
+   (->Cluster (u/uuid) (atom []) "standard"))
   ([type]
-    (->Cluster (u/uuid) (atom []) type )))
+   (->Cluster (u/uuid) (atom []) type)))
 
-(defonce cluster (cluster!))
+(def cluster (cluster!))
 
-(defn peer! 
+(defn peer!
   "Creates Peer instance"
   [data]
   (apply ->Peer data))
@@ -25,15 +24,15 @@
 (defn interface!
   "Creates Interface instance"
   [data]
-  (->Interface (:name data) (-> data :subnet ) (-> data :endpoint ) (:port data) (:key data) (atom [])))
+  (->Interface (:name data) (-> data :subnet) (-> data :endpoint) (:port data) (:key data) (atom [])))
 
-(defn node! 
+(defn node!
   "Creates Node instance"
   [data]
   (let [interfaces (map #(interface! %) (:interfaces data))
         node       (->Node (:uuid data) (:hostname data) (atom []) (:dns data) (:location data) "active")]
     (reduce (fn [n i]
-               (t/interface->node i n)) node interfaces)))
+              (t/interface->node i n)) node interfaces)))
 
 
 

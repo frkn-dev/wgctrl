@@ -1,17 +1,13 @@
 (ns wgctrl.http.main
-	(:gen-class)
   (:require [org.httpkit.server :as httpkit]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :as route]
             [wgctrl.http.handlers :as h]))
 
-
-
-
-(defroutes app 
+(defroutes app
   (GET "/" [] "<h2>=== Hello Fucking World!===</h2>")
   (GET "/peer" [] h/peer)
-  (GET "/stat" [] h/stat) 
+  (GET "/stat" [] h/stat)
   (route/not-found "<h1>Page not found</h1>"))
 
 (defn start-server [options]
