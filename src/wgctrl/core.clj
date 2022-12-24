@@ -3,7 +3,7 @@
   (:require [wgctrl.cluster.model :as m]
             [wgctrl.cluster.transforms :as t]
             [wgctrl.cluster.ssh :as ssh]
-            [wgctrl.http.main :as http])
+            [wgctrl.http.http :as http])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 (def config {:nodes [{:address "root@94.176.238.220" :location "dev" :dns "1.1.1.1"}]})

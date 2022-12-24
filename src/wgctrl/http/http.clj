@@ -1,4 +1,4 @@
-(ns wgctrl.http.main
+(ns wgctrl.http.http
   (:require [org.httpkit.server :as httpkit]
             [compojure.core :refer [defroutes GET]]
             [compojure.route :as route]

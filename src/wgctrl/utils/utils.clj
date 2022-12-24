@@ -1,4 +1,4 @@
-(ns wgctrl.utils.main
+(ns wgctrl.utils.utils
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
             [clojure.java.shell :as shell]

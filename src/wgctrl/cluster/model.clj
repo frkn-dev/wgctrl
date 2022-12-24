@@ -1,5 +1,6 @@
 (ns wgctrl.cluster.model
-  (:require [wgctrl.utils.main :as u]
+  (:gen-class)
+  (:require [wgctrl.utils.utils :as u]
             [wgctrl.cluster.transforms :as t]))
 
 (defrecord Interface [name subnet endpoint port key peers])

@@ -1,6 +1,6 @@
 (ns wgctrl.cluster.utils
   (:require
-   [wgctrl.utils.main :as u]
+   [wgctrl.utils.utils :as u]
    [wgctrl.utils.ipcalc :as ip]))
 
 (defn interface-size
