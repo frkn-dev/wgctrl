@@ -15,7 +15,7 @@
 
   (def server (atom nil))
   (http/stop-server server)
-  (reset! server (http/start-server {:port 8080})))
+  (reset! server (http/start-server {:port (System/getenv "PORT")})))
 
 (-main)
 
