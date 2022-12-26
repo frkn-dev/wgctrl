@@ -39,3 +39,9 @@
                 (if (< (u/interface-size i) (u/interface-size i'))
                   i
                   i')) (first interfaces) interfaces))))
+
+(defn peers-never-connected [data]
+  (->> data
+  (filter #(nil? (:latest %)))
+  (map #(:peer %))))
+

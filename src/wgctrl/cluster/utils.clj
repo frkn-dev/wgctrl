@@ -1,7 +1,7 @@
 (ns wgctrl.cluster.utils
-  (:require
-   [wgctrl.utils.utils :as u]
-   [wgctrl.utils.ipcalc :as ip]))
+  (:require [wgctrl.cluster.ipcalc :as ip]
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]))
 
 (defn interface-size
   "Count of peers on iface"
@@ -38,4 +38,17 @@
       :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
                                             a
                                             a')) (first addresses) (rest addresses))))))
+
+
+
+(defn load-edn
+  "Load edn from an io/reader source (filename or io/resource)."
+  [source]
+  (try
+    (with-open [r (io/reader source)]
+      (edn/read (java.io.PushbackReader. r)))
+    (catch java.io.IOException e
+      (printf "Couldn't open '%s': %s\n" source (.getMessage e)))
+    (catch RuntimeException e
+      (printf "Error parsing edn file '%s': %s\n" source (.getMessage e)))))
 

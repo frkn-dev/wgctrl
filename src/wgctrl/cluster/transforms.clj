@@ -1,4 +1,5 @@
-(ns wgctrl.cluster.transforms)
+(ns wgctrl.cluster.transforms
+  (:require [wgctrl.cluster.ssh :as ssh]))
 
 (defn peer->interface
   "Adds peer to node's interface"
@@ -14,6 +15,8 @@
   [interface node]
   (swap! (.interfaces node) conj interface)
   node)
+
+
 
 
 

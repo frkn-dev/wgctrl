@@ -1,4 +1,4 @@
-(ns wgctrl.utils.ipcalc
+(ns wgctrl.cluster.ipcalc
   (:require [clojure.string :as str]))
 
 (defn addr->string

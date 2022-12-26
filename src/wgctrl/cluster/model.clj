@@ -1,7 +1,5 @@
 (ns wgctrl.cluster.model
-  (:gen-class)
-  (:require [wgctrl.utils.utils :as u]
-            [wgctrl.cluster.transforms :as t]))
+  (:require [wgctrl.cluster.transforms :as t]))
 
 (defrecord Interface [name subnet endpoint port key peers])
 (defrecord Peer [uuid name psk public-key private-key allowed-ips])
@@ -11,11 +9,11 @@
 (defn cluster!
   "Creates Cluster instance"
   ([]
-   (->Cluster (u/uuid) (atom []) "standard"))
+   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) "standard"))
   ([type]
-   (->Cluster (u/uuid) (atom []) type)))
+   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) type)))
 
-(def cluster (cluster!))
+(defonce cluster (cluster!))
 
 (defn peer!
   "Creates Peer instance"

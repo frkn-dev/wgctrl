@@ -10,7 +10,6 @@
             [wgctrl.cluster.utils :as utils]))
 
 (defn peer [request]
-
   (let [i (s/interface-with-min-peers (s/node-with-min-peers @(.nodes m/cluster) "dev"))
         keys (keys/generate-client i)
         ip (utils/addr! i)
@@ -32,12 +31,20 @@
                                    :peer {:pubkey (:pubkey keys)
                                           :psk  (:psk keys)
                                           :allowed_ips "0.0.0.0/0"
-                                          :endpoint (.endpoint i)}}))
-        (json/generate-string {:err "Can't create peer" :message err})))))
+                                          :endpoint (str (-> i .endpoint :inet) ":" (-> i .port))}}))
+        {:body (json/generate-string {:err "Can't create peer" :message err})
+         :code 200
+         :headers {"Content-Type" "text/html; charset=utf-8"}}
+
+            ))))
 
 (defn stat [request]
   (let [stat (stat/cluster @(.nodes m/cluster))]
     (println "STAT " (json/generate-string (conj {:uuid (.uuid m/cluster)} {:nodes stat})))
-    (json/generate-string (conj {:uuid (.uuid m/cluster)} {:nodes stat}))))
+    {:body (json/generate-string (conj {:uuid (.uuid m/cluster)} {:nodes stat}))
+     :code 200
+     :headers {"Content-Type" "text/html; charset=utf-8"}}
+     ))
+
 
 
