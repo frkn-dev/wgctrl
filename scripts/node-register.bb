@@ -85,9 +85,11 @@
 
 
 (defn wg-iface-public-key [private]
-  (-> (shell/sh "wg" "pubkey" :in private) :out str/trim-newline))
-
-
+  (let [{:keys [exit out]} (shell/sh "wg" "pubkey" :in private)]
+    (if (= exit 0)
+      (-> out str/trim-newline)
+      "FAKE PRIVATE KEY")))
+  
 (defn wg-iface-key [interface]
   "Return PrivateKey of WG interface"
   (->> 
@@ -104,7 +106,8 @@
   {:name interface,
    :subnet (subnet interface),
    :port (port interface)
-   :public-key (wg-iface-public-key (wg-iface-key interface))})
+   :public-key (or (wg-iface-public-key (wg-iface-key interface))
+                   "FAKE")})
 
   
 

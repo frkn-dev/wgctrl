@@ -13,12 +13,14 @@
   ([type]
    (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) type)))
 
-(defonce cluster (cluster!))
+
 
 (defn peer!
   "Creates Peer instance"
   [data]
-  (apply ->Peer data))
+  (if (= 3 (count data))
+    (apply ->Peer data)
+    nil))
 
 (defn interface!
   "Creates Interface instance"

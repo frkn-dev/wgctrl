@@ -33,7 +33,7 @@
                   "preshared-key"  (str "/tmp/" f))
         {:err err :out :exit}))))
 
-(defn peers
+(defn peers-stat
  "Gets real peers from WG interface "
  [^String endpoint ^String interface]
   (->> (-> (shell/sh "ssh" endpoint "wg" "show" interface) :out
@@ -45,17 +45,21 @@
         (mapv #(apply concat %)) 
         (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
 
+(defn peers
+ "Gets real peers from WG interface "
+ [^String endpoint ^String interface]
+    (let [peers (-> (shell/sh "ssh" endpoint "wg" "showconf" interface) :out)]
+      (->> (str/split peers #"\[Peer\]\n")
+           (drop 1) ; drop interface record
+           (map #(str/split % #"\n"))
+           (map (fn [x]  (map #(str/split % #" = ") x)))
+           (map (fn [x] (map #(last %) x))) ; drop keys
+           (map #(zipmap [:peer :psk :ip :endpoint ] %)))))
+
 (defn delete-peer [^String endpoint ^String interface ^String peer]
   (-> (shell/sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))
 
 
-(def p (peers "root@94.176.238.220" "wg0"))
-
-(-> p)
-
-(s/peers-never-connected  p)
-
-(s/peers-connected  p)
 
 
 
