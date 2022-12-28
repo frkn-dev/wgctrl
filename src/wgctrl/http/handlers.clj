@@ -11,9 +11,10 @@
   (:use [clojure.walk :only [keywordize-keys]]))
 
 (defn peer [req]
-  (let [location (-> req :params keywordize-keys :location)
+  (let [location (or (-> req :params keywordize-keys :location) "dev")
         node (s/node-with-min-peers @(.nodes m/cluster) location)
         interface (s/interface-with-min-peers node)]
+        (println location "TT")
         (if (or (empty? node)
                 (nil? interface))
             {:body (json/generate-string {:code 10
@@ -22,6 +23,8 @@
             :code 200
             :headers {"Content-Type" "application/json; charset=utf-8"    
                       "Access-Control-Allow-Origin" "*"}}
+
+
 
             (let [keys (keys/generate (.key interface))
                 ip (utils/addr! interface)]
