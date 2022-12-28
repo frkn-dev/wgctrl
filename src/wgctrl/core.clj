@@ -43,8 +43,6 @@
   (println "Listening api port: 8080")
   (reset! api-server (httpkit/run-server #'routes/app {:port 8080})))
 
-@(.peers (first @(.interfaces (first @(.nodes (-> m/cluster
-  ))))))
 
 ;(stop-server)
 ;(-main)
