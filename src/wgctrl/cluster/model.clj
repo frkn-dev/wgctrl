@@ -2,7 +2,7 @@
   (:require [wgctrl.cluster.transforms :as t]))
 
 (defrecord Interface [name subnet endpoint port key peers])
-(defrecord Peer [uuid name psk public-key private-key allowed-ips])
+(defrecord Peer [peer psk allowed-ips])
 (defrecord Node [uuid hostname interfaces dns location status])
 (defrecord Cluster [uuid nodes type])
 
@@ -23,7 +23,7 @@
 (defn interface!
   "Creates Interface instance"
   [data]
-  (->Interface (:name data) (-> data :subnet) (-> data :endpoint) (:port data) (:key data) (atom [])))
+  (->Interface (:name data) (-> data :subnet) (-> data :endpoint) (:port data) (:public-key data) (atom [])))
 
 (defn node!
   "Creates Node instance"
@@ -32,8 +32,6 @@
         node       (->Node (:uuid data) (:hostname data) (atom []) (:dns data) (:location data) "active")]
     (reduce (fn [n i]
               (t/interface->node i n)) node interfaces)))
-
-
 
 
 

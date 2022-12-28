@@ -2,8 +2,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.shell :as shell]
             [clojure.string :as str]
-
-           )
+            [wgctrl.cluster.selectors :as s])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 (defn node-reg-data
@@ -18,10 +17,10 @@
 (defn peer!
   "Creates peer on WG node"
   [keys interface ip]
-  (let [pubkey (-> (shell/sh "wg" "pubkey" :in (str (:key keys))) :out str/trim-newline)
-        f (str/replace (:psk keys) #"/" "")]
+  (let [pubkey (:server-pubkey keys)
+        f (str/replace (:client-psk keys) #"/" "")]
 
-    (spit (str "/tmp/" f) (:psk keys))
+    (spit (str "/tmp/" f) (:client-psk keys))
     (let [{:keys [err out exit]}
           (shell/sh "scp" (str "/tmp/" f)
                     (str "root@" (:inet (.endpoint interface)) ":/tmp"))]
@@ -29,7 +28,7 @@
       (if (= 0 exit)
         (shell/sh "ssh" (str "root@" (:inet (.endpoint interface)))
                   "wg" "set" (.name interface)
-                  "peer" pubkey
+                  "peer" (:client-pubkey keys)
                   "allowed-ips" (str ip "/32")
                   "preshared-key"  (str "/tmp/" f))
         {:err err :out :exit}))))
@@ -49,6 +48,21 @@
 (defn delete-peer [^String endpoint ^String interface ^String peer]
   (-> (shell/sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))
 
+
 (def p (peers "root@94.176.238.220" "wg0"))
+
+(-> p)
+
+(s/peers-never-connected  p)
+
+(s/peers-connected  p)
+
+
+
+
+
+
+
+
 
 

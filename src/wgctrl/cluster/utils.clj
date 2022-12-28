@@ -22,22 +22,24 @@
 (defn addr!
   "Calculates available IP address for client"
   [interface]
-  (let [subnet (.subnet interface)
-        size (interface-size interface)
-        addresses (->> (map (fn [x]
-                              (-> x
-                                  .allowed-ips
-                                  ip/addr
-                                  ip/addr->int)) @(.peers interface))
-                       sort
-                       (map #(ip/int->addr %)))]
-
-    (cond
-      (= 0 size) (ip/addr++ (ip/addr (:inet subnet)))
-      (>= size (ip/size (ip/mask (:inet subnet)))) nil
-      :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
-                                            a
-                                            a')) (first addresses) (rest addresses))))))
+  (if (nil? interface)
+    nil
+    (let [subnet (.subnet interface)
+          size (interface-size interface)
+          addresses (->> (map (fn [x]
+                                (-> x
+                                    .allowed-ips
+                                    ip/addr
+                                    ip/addr->int)) @(.peers interface))
+                         sort
+                         (map #(ip/int->addr %)))]
+  
+        (cond
+          (= 0 size) (ip/addr++ (ip/addr (:inet subnet)))
+          (>= size (ip/size (ip/mask (:inet subnet)))) nil
+          :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
+                                                a
+                                              a')) (first addresses) (rest addresses)))))))
 
 
 

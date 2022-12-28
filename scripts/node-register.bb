@@ -83,6 +83,11 @@
     (and (fs/exists? f)
          (> (fs/size f) 0))))
 
+
+(defn wg-iface-public-key [private]
+  (-> (shell/sh "wg" "pubkey" :in private) :out str/trim-newline))
+
+
 (defn wg-iface-key [interface]
   "Return PrivateKey of WG interface"
   (->> 
@@ -99,7 +104,7 @@
   {:name interface,
    :subnet (subnet interface),
    :port (port interface)
-   :key (wg-iface-key interface)})
+   :public-key (wg-iface-public-key (wg-iface-key interface))})
 
   
 
