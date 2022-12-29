@@ -1,4 +1,4 @@
-# WGCTRL: Wireguard API Service
+# WGCTRL: WireGuard API Service
 
 The Service provides an API for controlling **WireGuard** servers.
 It allows you to manage WireGuard nodes and automatically
