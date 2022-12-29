@@ -7,11 +7,11 @@
    checks Peer is uniq by :peer field"
   [peer interface]
   (if (c/peer-exists? peer interface)
-      interface
-      (do (swap! (.peers interface) conj peer)
-          interface)))
+    interface
+    (do (swap! (.peers interface) conj peer)
+        interface)))
 
-(defn node->cluster 
+(defn node->cluster
   "Adds Node to Cluster, 
    checks node is uniq by UUID"
   [node cluster]

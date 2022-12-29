@@ -10,7 +10,7 @@
 
 (defn uuid-nodes-by-location [nodes location]
   (let [n (->> nodes (filter #(= location (-> % .location :code))))]
-     (map #(zipmap [:uuid :weight] [(.uuid %) (.weight %)] ) n)))
+    (map #(zipmap [:uuid :weight] [(.uuid %) (.weight %)]) n)))
 
 (defn node-by-uuid [nodes uuid]
   (filter #(= uuid (-> % .uuid)) nodes))
@@ -18,14 +18,11 @@
 (defn node-by-uuid [nodes uuid]
   (first (filter #(= uuid (.uuid %)) nodes)))
 
-
-
 (defn interface-by-type [node type]
   nil)
 
 (defn available-locations [nodes]
-  (set(map #(:location %) nodes)))
-
+  (set (map #(:location %) nodes)))
 
 (defn active-nodes [cluster]
   (filter #(c/node-active?) @(.nodes cluster)))
@@ -54,16 +51,16 @@
 
 (defn peers-never-connected [data]
   (->> data
-      (filter #(nil? (:latest %)))
-      (map #(:peer %))))
+       (filter #(nil? (:latest %)))
+       (map #(:peer %))))
 
 (defn peers-connected [data]
   (->> data
-      (remove #(nil? (:latest %)))
+       (remove #(nil? (:latest %)))
 
-      (map #({:peer (:peer %) 
-              :latest (:latest %) 
-              :traffic (:traffic %)}))))
+       (map #({:peer (:peer %)
+               :latest (:latest %)
+               :traffic (:traffic %)}))))
 
 
 

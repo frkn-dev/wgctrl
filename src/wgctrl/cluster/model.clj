@@ -29,14 +29,14 @@
   "Creates Node instance"
   [data]
   (let [interfaces (map #(interface! %) (:interfaces data))
-        node       (->Node (:uuid data) 
-                   (:hostname data) 
-                   (atom []) 
-                   (:dns data) 
-                   (:location data) 
-                   "active"
-                   (or (:weight data)
-                       10) )]
+        node       (->Node (:uuid data)
+                           (:hostname data)
+                           (atom [])
+                           (:dns data)
+                           (:location data)
+                           "active"
+                           (or (:weight data)
+                               10))]
     (reduce (fn [n i]
               (t/interface->node i n)) node interfaces)))
 
