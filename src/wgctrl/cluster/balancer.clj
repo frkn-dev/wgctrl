@@ -31,9 +31,3 @@
                               @(.nodes state/cluster)
                               (:code loc))))}))
           {} (s/available-locations @(.nodes state/cluster))))
-
-;(-> balancer)
-
-;(<!! (:dev balancer))
-;(<!! (:lt balancer))
-;

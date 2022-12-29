@@ -7,6 +7,7 @@
             [wgctrl.cluster.state :as state]
             [wgctrl.cluster.balancer :as b]
 
+            [clojure.core.async :refer [<!!]]
             [wgctrl.cluster.model :as m]
             [wgctrl.cluster.selectors :as s]
             [wgctrl.cluster.transforms :as t]
@@ -36,9 +37,9 @@
 
   (state/restore-state config)
 
- ; (log/info "Listening nrepl port: 7888")
- ; (reset! nrepl-server (start-server :bind (-> config :nrepl :bind) 
- ;                                    :port (-> config :nrepl :port)))
+  (log/info "Listening nrepl port: 7888")
+  (reset! nrepl-server (start-server :bind (-> config :nrepl :bind)
+                                     :port (-> config :nrepl :port)))
 
   (log/info "Listening api port: 8080")
   (reset! api-server (httpkit/run-server #'routes/app {:port 8080})))
