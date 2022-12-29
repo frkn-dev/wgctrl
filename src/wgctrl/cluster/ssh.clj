@@ -8,11 +8,14 @@
 (defn node-reg-data
   "Gets data from node"
   [node]
-  (-> (shell/sh "ssh" (:address node) "cat" "/root/.wg-node")
+  (let [{:keys [location dns weight]} node]
+    (println location dns weight)
+    (-> (shell/sh "ssh" (:address node) "cat" "/root/.wg-node")
       :out
       (edn/read-string)
-      (conj {:location (:location node)})
-      (conj {:dns (:dns node)})))
+      (conj {:location location})
+      (conj {:dns dns})
+      (conj {:weight weight}))))
 
 (defn peer!
   "Creates peer on WG node"

@@ -4,13 +4,23 @@
             [clojure.tools.logging :as log]
             [org.httpkit.server :as httpkit]
             [wgctrl.http.routes :as routes]
-            [wgctrl.cluster.state :as state]))
+            [wgctrl.cluster.state :as state]
+            [wgctrl.cluster.balancer :as b]
+            
+            [wgctrl.cluster.model :as m]
+            [wgctrl.cluster.selectors :as s]
+            [wgctrl.cluster.transforms :as t]
+            [wgctrl.cluster.ssh :as ssh]
+            ))
 
 (defonce api-server (atom nil))
 (defonce nrepl-server (atom nil))
 
 (def config {:nrepl {:bind "127.0.0.1" :port 7888} 
-             :nodes [{:address "root@94.176.238.220" :location {:code "dev" :name "🏴‍☠️ Development"} :dns "1.1.1.1, 1.0.0.1"}]
+             :nodes [{:address "root@94.176.238.220" 
+                      :location {:code "dev" :name "🏴‍☠️ Development"} 
+                      :dns "1.1.1.1, 1.0.0.1"
+                      :weight 10}]
              :api-port 8080})
 
 (defn stop-api-server []
@@ -21,22 +31,17 @@
     (@api-server :timeout 100)
     (reset! api-server nil)))
 
+
 (defn -main []
   (log/info "WGCTRL is running...")
   (log/info (str "Using next configuration ->> " config))
 
   (state/restore-state config)
 
-  (log/info "Listening nrepl port: 7888")
-  (reset! nrepl-server (start-server :bind (-> config :nrepl :bind) 
-                                     :port (-> config :nrepl :port)))
+ ; (log/info "Listening nrepl port: 7888")
+ ; (reset! nrepl-server (start-server :bind (-> config :nrepl :bind) 
+ ;                                    :port (-> config :nrepl :port)))
 
   (log/info "Listening api port: 8080")
   (reset! api-server (httpkit/run-server #'routes/app {:port 8080})))
-
-
-;(stop-server nrepl-server)
-;(stop-api-server) 
-;(reset! nrepl-server nil)
-;(-main)
 

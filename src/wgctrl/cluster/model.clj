@@ -3,7 +3,7 @@
 
 (defrecord Interface [name subnet endpoint port key peers])
 (defrecord Peer [peer psk allowed-ips])
-(defrecord Node [uuid hostname interfaces dns location status])
+(defrecord Node [uuid hostname interfaces dns location status weight])
 (defrecord Cluster [uuid nodes type])
 
 (defn cluster!
@@ -12,8 +12,6 @@
    (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) "standard"))
   ([type]
    (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) type)))
-
-
 
 (defn peer!
   "Creates Peer instance"
@@ -31,7 +29,14 @@
   "Creates Node instance"
   [data]
   (let [interfaces (map #(interface! %) (:interfaces data))
-        node       (->Node (:uuid data) (:hostname data) (atom []) (:dns data) (:location data) "active")]
+        node       (->Node (:uuid data) 
+                   (:hostname data) 
+                   (atom []) 
+                   (:dns data) 
+                   (:location data) 
+                   "active"
+                   (or (:weight data)
+                       10) )]
     (reduce (fn [n i]
               (t/interface->node i n)) node interfaces)))
 

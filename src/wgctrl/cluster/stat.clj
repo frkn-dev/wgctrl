@@ -1,8 +1,8 @@
 (ns wgctrl.cluster.stat)
 
 (defn node 	[nodes]
-  (reduce (fn [s i]
-            (conj s {:name (.name i)
+  (reduce (fn [acc i]
+            (conj acc {:name (.name i)
                      :peers (count @(.peers i))})) [] @(.interfaces nodes)))
 
 (defn cluster [nodes]

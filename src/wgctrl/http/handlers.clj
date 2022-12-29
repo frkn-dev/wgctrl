@@ -67,7 +67,7 @@
 (defn locations [request]
   (let [locations (s/available-locations @(.nodes state/cluster))]
     (println (str "GET /locations " request " - " locations))
-    {:body (json/generate-string {:locations (vec locations)})
+    {:body (json/generate-string (vec locations))
      :code 200
      :headers {"Content-Type" "application/json; charset=utf-8"
                "Access-Control-Allow-Origin" "*"}}))

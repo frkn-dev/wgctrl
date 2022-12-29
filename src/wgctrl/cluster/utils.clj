@@ -33,7 +33,6 @@
                                     ip/addr->int)) @(.peers interface))
                          sort
                          (map #(ip/int->addr %)))]
-  
         (cond
           (= 0 size) (ip/addr++ (ip/addr (:inet subnet)))
           (>= size (ip/size (ip/mask (:inet subnet)))) nil

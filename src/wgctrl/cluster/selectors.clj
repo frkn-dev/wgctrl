@@ -8,6 +8,18 @@
 (defn nodes-by-location [nodes location]
   (filter #(= location (-> % .location :code)) nodes))
 
+(defn uuid-nodes-by-location [nodes location]
+  (let [n (->> nodes (filter #(= location (-> % .location :code))))]
+     (map #(zipmap [:uuid :weight] [(.uuid %) (.weight %)] ) n)))
+
+(defn node-by-uuid [nodes uuid]
+  (filter #(= uuid (-> % .uuid)) nodes))
+
+(defn node-by-uuid [nodes uuid]
+  (first (filter #(= uuid (.uuid %)) nodes)))
+
+
+
 (defn interface-by-type [node type]
   nil)
 
