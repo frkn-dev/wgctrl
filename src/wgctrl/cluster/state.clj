@@ -31,10 +31,9 @@
                         (t/peer->interface (m/peer! [peer psk ip]) interface))) i peers)
           (recur (next interfaces))))))
    ; Create initial balancers
-  (doall (b/balancers! cluster)))
+  (dorun (b/balancers! cluster)))
 
 
-(.balancers cluster)
 
 
 

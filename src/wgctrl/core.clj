@@ -39,11 +39,6 @@
     (reset! api-server nil)))
 
 
-
-(.balancers state/cluster)
-
-;(b/balancers! state/cluster)
-
 (defn -main []
   (log/info "WGCTRL is running...")
   (log/info (str "Using next configuration ->> " config))
@@ -54,8 +49,7 @@
   (reset! nrepl-server (start-server :bind (-> config :nrepl :bind)
                                      :port (-> config :nrepl :port)))
   (log/info "Listening api port: 8080")
-  (reset! api-server (httpkit/run-server #'routes/app {:port 8080}))
-  )
+  (reset! api-server (httpkit/run-server #'routes/app {:port 8080})))
 
 
 
