@@ -11,13 +11,13 @@
             [wgctrl.cluster.stat :as stat]
             [wgctrl.cluster.utils :as utils]
             [wgctrl.cluster.state :as state]
-            [wgctrl.cluster.balancer :as b])
+            )
   (:use [clojure.walk :only [keywordize-keys]]))
 
+
 (defn peer [req]
-  (let [location (or (-> req :params keywordize-keys :location) "dev")
-        node-uuid (if (some #(= (keyword location) %) (keys b/balancer))
-                    (:uuid (<!! ((keyword location) b/balancer))))]
+  (let [location (or (-> req :params keywordize-keys :location) "dev")]
+    (let [node-uuid (:uuid (<!! ((keyword location) @(.balancers state/cluster) )))]
 
     (let [node (s/node-by-uuid @(.nodes state/cluster) node-uuid)
           interface (s/interface-with-min-peers node)]
@@ -60,7 +60,7 @@
                   {:body (json/generate-string {:code 10 :err "Can't create peer" :message err})
                    :code 200
                    :headers {"Content-Type" "application/json; charset=utf-8"
-                             "Access-Control-Allow-Origin" "*"}}))))))))
+                             "Access-Control-Allow-Origin" "*"}})))))))))
 
 (defn stat [request]
   (let [stat (stat/cluster @(.nodes state/cluster))]

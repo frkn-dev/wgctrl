@@ -4,14 +4,15 @@
 (defrecord Interface [name subnet endpoint port key peers])
 (defrecord Peer [peer psk allowed-ips])
 (defrecord Node [uuid hostname interfaces dns location status weight])
-(defrecord Cluster [uuid nodes type])
+(defrecord Cluster [uuid nodes type balancers])
+
 
 (defn cluster!
   "Creates Cluster instance"
   ([]
-   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) "standard"))
+   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) "standard" (atom {})))
   ([type]
-   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) type)))
+   (->Cluster (.toString (java.util.UUID/randomUUID)) (atom []) type (atom {}))))
 
 (defn peer!
   "Creates Peer instance"

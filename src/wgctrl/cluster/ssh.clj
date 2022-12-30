@@ -9,7 +9,7 @@
   "Gets data from node"
   [node]
   (let [{:keys [location dns weight]} node]
-    (println location dns weight)
+   ; (println location dns weight)
     (-> (shell/sh "ssh" (:address node) "cat" "/root/.wg-node")
         :out
         (edn/read-string)

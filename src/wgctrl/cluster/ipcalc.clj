@@ -20,10 +20,12 @@
 (defn int->addr
   "Transforms IP address from uint to string"
   [i]
-  (addr->string [(bit-shift-right (bit-and i 0xff000000) 24)
+  (if (nil? i)
+    nil
+    (addr->string [(bit-shift-right (bit-and i 0xff000000) 24)
                  (bit-shift-right (bit-and i 0x00ff0000) 16)
                  (bit-shift-right (bit-and i 0x0000ff00) 8)
-                 (bit-and i 0x000000ff)]))
+                 (bit-and i 0x000000ff)])))
 
 (defn addr->int
   "Transforms IP address from string to uint"
@@ -74,9 +76,11 @@
 (defn addr
   "Cuts address of subnet from mask"
   [subnet]
-  (->>
-   (str/split subnet #"/")
-   first))
+  (if (nil? subnet)
+    nil
+    (->>
+     (str/split subnet #"/")
+     first)))
 
 (defn size
   "Calculates size of subnet by mask"

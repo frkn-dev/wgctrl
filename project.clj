@@ -1,7 +1,7 @@
 (defproject wgctrl "0.1.0-SNAPSHOT"
   :description "Controls WireGuard Cluster"
   :license {:name "GPL-2.0-or-later WITH Classpath-exception-2.0"}
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/tools.logging "1.2.4"]
                  [http-kit "2.6.0"]
                  [org.clojure/core.async "1.6.673"]

@@ -1,6 +1,5 @@
 (ns wgctrl.cluster.transforms
-  (:require [wgctrl.cluster.ssh :as ssh]
-            [wgctrl.cluster.checks :as c]))
+  (:require [wgctrl.cluster.checks :as c]))
 
 (defn peer->interface
   "Adds Peer to node's Interface,
@@ -19,6 +18,13 @@
     cluster
     (do (swap! (.nodes cluster) conj node)
         cluster)))
+
+(defn balancer->cluster
+  "Adds Balancer to Cluster, 
+   checks node is uniq by UUID"
+  [balancer cluster]
+  (swap! (.balancers cluster) conj balancer)
+        nil)
 
 (defn interface->node
   "Adds Interface to Node"
