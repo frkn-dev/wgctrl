@@ -79,17 +79,15 @@ The response is a map for WG configuration
 }     
 ```
 
-- ``/location`` 
+- ``/locations`` 
 
 ```json
-{
-  "locations": [
+[
     {
       "code": "dev",
       "name": "🏴‍☠️ Development"
     }
-  ]
-}
+]
 
 ```
 ### Errors
