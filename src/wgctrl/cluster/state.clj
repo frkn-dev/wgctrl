@@ -7,6 +7,14 @@
 
 (defonce cluster (m/cluster!))
 
+(defn- restore-peers [c]
+  (for [node @(.nodes c)]
+    (dorun (for [interface @(.interfaces node)]
+     (let [connstr  (str "root@" (-> interface .endpoint :inet))
+          iface (-> interface .name)]
+             (reduce (fn [interface p]
+                   (t/peer->interface (m/peer! p) interface)) interface (ssh/peers connstr iface)))))))
+
 (defn restore-state
   "Restores state of WG Cluster, adds Nodes with Interfaces according config,
    adds Peers by ssh'ing each node.
@@ -19,21 +27,7 @@
           cluster (:nodes config))
 
   ; Checking and adding peers 
-  (loop [nodes @(.nodes cluster)]
-    (loop [interfaces @(.interfaces (first nodes))]
-      (if (empty? interfaces)
-        nil
-        (let [i (first interfaces)
-              peers (ssh/peers (str "root@" (-> i :endpoint :inet))
-                                            (-> i :name))]
-          (reduce (fn [interface p]
-                     (let [{:keys [peer psk ip]} p]
-                        (t/peer->interface (m/peer! [peer psk ip]) interface))) i peers)
-          (recur (next interfaces))))))
+  (dorun (restore-peers cluster))
+  
    ; Create initial balancers
   (dorun (b/balancers! cluster)))
-
-
-
-
-

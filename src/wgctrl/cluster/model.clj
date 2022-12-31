@@ -17,29 +17,28 @@
 (defn peer!
   "Creates Peer instance"
   [data]
-  (if (= 3 (count data))
-    (apply ->Peer data)
-    nil))
+  (let [{:keys [peer psk ip]} data]
+    (->Peer peer psk ip)))
 
 (defn interface!
   "Creates Interface instance"
   [data]
-  (->Interface (:name data) (-> data :subnet) (-> data :endpoint) (:port data) (:public-key data) (atom [])))
+  (let [{:keys [name subnet endpoint port public-key]} data]
+    (->Interface name
+                 subnet
+                 endpoint
+                 port
+                 public-key
+                 (atom []))))
 
 (defn node!
   "Creates Node instance"
   [data]
-  (let [interfaces (map #(interface! %) (:interfaces data))
-        node       (->Node (:uuid data)
-                           (:hostname data)
-                           (atom [])
-                           (:dns data)
-                           (:location data)
-                           "active"
-                           (or (:weight data)
-                               10))]
+  (let [{:keys [uuid hostname dns interfaces location weight]} data]
+    (let [interfaces (mapv #(interface! %) interfaces )
+          node       (->Node uuid hostname (atom []) dns (or location "dev") "active" (or weight 10))]
     (reduce (fn [n i]
-              (t/interface->node i n)) node interfaces)))
+              (t/interface->node i n)) node interfaces))))
 
 
 

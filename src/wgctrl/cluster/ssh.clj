@@ -51,13 +51,15 @@
 (defn peers
   "Gets real peers from WG interface "
   [^String endpoint ^String interface]
-  (let [peers (-> (shell/sh "ssh" endpoint "wg" "showconf" interface) :out)]
-    (->> (str/split peers #"\[Peer\]\n")
+  (let [{:keys [err exit out]} (shell/sh "ssh" endpoint "wg" "showconf" interface)]
+    (if (= exit 0 )
+      (->> (str/split out #"\[Peer\]\n")
          (drop 1) ; drop interface record
          (map #(str/split % #"\n"))
          (map (fn [x]  (map #(str/split % #" = ") x)))
          (map (fn [x] (map #(last %) x))) ; drop keys
-         (map #(zipmap [:peer :psk :ip :endpoint] %)))))
+         (map #(zipmap [:peer :psk :ip ] %)))
+      nil)))
 
 (defn delete-peer [^String endpoint ^String interface ^String peer]
   (-> (shell/sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))

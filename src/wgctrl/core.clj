@@ -38,7 +38,6 @@
     (@api-server :timeout 100)
     (reset! api-server nil)))
 
-
 (defn -main []
   (log/info "WGCTRL is running...")
   (log/info (str "Using next configuration ->> " config))

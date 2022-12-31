@@ -34,7 +34,7 @@
                          sort
                          (map #(ip/int->addr %)))]
       (cond
-        (= 0 size) (ip/addr++ (ip/addr  subnet))
+        (= 0 size) (ip/addr++ (ip/addr subnet))
         (>= size (ip/size (ip/mask subnet))) nil
         :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
                                               a
