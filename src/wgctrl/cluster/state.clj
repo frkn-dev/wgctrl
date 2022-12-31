@@ -3,7 +3,11 @@
             [wgctrl.cluster.transforms :as t]
             [wgctrl.cluster.selectors :as s]
             [wgctrl.cluster.model :as m]
-            [wgctrl.cluster.balancer :as b]))
+            [wgctrl.cluster.balancer :as b]
+
+            [wgctrl.cluster.utils :as utils]
+
+            ))
 
 (defonce cluster (m/cluster!))
 

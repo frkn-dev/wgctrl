@@ -31,27 +31,31 @@
          :headers {"Content-Type" "application/json; charset=utf-8"
                    "Access-Control-Allow-Origin" "*"}}
 
-        (let [keys (keys/generate (.key interface))
-              ip (utils/addr! interface)]
-
-          (let [{:keys [err exit]} (ssh/peer! keys interface ip)]
+        (let [{:keys [client-pubkey client-key client-psk server-pubkey]} (keys/generate (.key interface))
+               ip (utils/addr! interface)]
+          (let [{:keys [err exit]} (ssh/peer! {:client-pubkey client-pubkey
+                                               :client-key client-key
+                                               :client-psk client-psk
+                                               :server-pubkey server-pubkey} 
+                                               interface
+                                               ip)]
             (if (= 0 exit)
-              (do (t/peer->interface (m/peer! [(:client-pubkey keys)
-                                               (:client-psk keys)
-                                               (str ip "/32")]) interface)
+              (do (t/peer->interface (m/peer! {:peer client-pubkey 
+                                               :psk client-psk 
+                                               :ip (str ip "/32")}) interface)
                   (log/info (str "GET /peer?location=" location " - "
-                                 (:client-pubkey keys) " "
-                                 (:client-psk keys) " "
+                                 client-pubkey  " "
+                                 client-psk  " "
                                  (str ip "/32")))
                   {:code 200
                    :headers {"Content-Type" "application/json; charset=utf-8"
                              "Access-Control-Allow-Origin" "*"}
                    :body (json/generate-string
                           {:interface {:address (str ip "/24")
-                                       :key (:client-key keys)
-                                       :dns (.dns node)}
-                           :peer {:pubkey (:server-pubkey keys)
-                                  :psk  (:client-psk keys)
+                                       :key client-key 
+                                       :dns (:dns node)}
+                           :peer {:pubkey server-pubkey 
+                                  :psk client-psk
                                   :allowed_ips "0.0.0.0/0"
                                   :endpoint (str (-> interface .endpoint :inet) ":"
                                                  (-> interface .port))}})})
