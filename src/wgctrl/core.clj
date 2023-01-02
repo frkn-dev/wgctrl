@@ -12,11 +12,11 @@
 (defonce nrepl-server (atom nil))
 
 (def config {:nrepl {:bind "127.0.0.1" :port 7888}
+             :api-port 8080
              :nodes [{:address "root@94.176.238.220"
                       :location {:code "dev" :name "🏴‍☠️ Development"}
                       :dns "1.1.1.1, 1.0.0.1"
-                      :weight 1}]
-             :api-port 8080})
+                      :weight 1}]})
 
 (defn stop-api-server []
   (when-not (nil? @api-server)
@@ -33,11 +33,12 @@
 
   (state/restore-state config)
   
-  (log/info "Listening nrepl port: 7888")
-  (reset! nrepl-server (start-server :bind (-> config :nrepl :bind)
-                                     :port (-> config :nrepl :port)))
-  (log/info "Listening api port: 8080")
-  (reset! api-server (httpkit/run-server #'routes/app {:port 8080})))
+  (log/info "Listening nrepl port: " (:nrepl config))
+  (reset! nrepl-server (start-server (:nrepl config)))
+
+  (log/info "Listening api port: " (:api-port config))
+  (reset! api-server (httpkit/run-server #'routes/app {:port (:api-port config)})))
+
 
 
 
