@@ -16,20 +16,20 @@
 
 
 (defn peer [req]
-  (let [location (or (-> req :params keywordize-keys :location) "dev")]
-    (let [node-uuid (:uuid (<!! ((keyword location) @(.balancers state/cluster) )))]
+  (let [location-param (or (-> req :params keywordize-keys :location) "all")
+        location (keyword location-param)]
 
-    (let [node (s/node-by-uuid @(.nodes state/cluster) node-uuid)
+    (if (nil? (location @(.balancers state/cluster)))
+      {:code 200
+       :headers {"Content-Type" "application/json; charset=utf-8"
+                   "Access-Control-Allow-Origin" "*"}
+        :body (json/generate-string {:code 10
+                                    :err "Can't create peer"
+                                    :message (str "Node within location " location-param " not found")})}
+
+    (let [node-uuid (:uuid (<!! (location @(.balancers state/cluster) )))
+          node (s/node-by-uuid @(.nodes state/cluster) node-uuid)
           interface (s/interface-with-min-peers node)]
-
-      (if (or (empty? node)
-              (nil? interface))
-        {:body (json/generate-string {:code 10
-                                      :err "Can't create peer"
-                                      :message (str "Node or Interface for " location " not found")})
-         :code 200
-         :headers {"Content-Type" "application/json; charset=utf-8"
-                   "Access-Control-Allow-Origin" "*"}}
 
         (let [{:keys [client-pubkey client-key client-psk server-pubkey]} (keys/generate (.key interface))
                ip (utils/addr! interface)]
@@ -64,7 +64,7 @@
                   {:body (json/generate-string {:code 10 :err "Can't create peer" :message err})
                    :code 200
                    :headers {"Content-Type" "application/json; charset=utf-8"
-                             "Access-Control-Allow-Origin" "*"}})))))))))
+                             "Access-Control-Allow-Origin" "*"}}))))))))
 
 (defn stat [request]
   (let [stat (stat/cluster @(.nodes state/cluster))]

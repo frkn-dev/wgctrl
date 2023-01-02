@@ -5,20 +5,8 @@
             [org.httpkit.server :as httpkit]
             [wgctrl.http.routes :as routes]
             [wgctrl.cluster.state :as state]
-            [wgctrl.cluster.balancer :as b]
+            [wgctrl.cluster.balancer :as b]))
 
-            [wgctrl.cluster.transforms :as t]
-             [wgctrl.cluster.ssh :as ssh]
-[wgctrl.cluster.model :as m]
-[clojure.core.async :refer [<!!]]
-            ))
-
-            ;[clojure.core.async :refer [<!!]]
-           ; [wgctrl.cluster.model :as m]
-            ;[wgctrl.cluster.checks :as c]
-            ;[wgctrl.cluster.selectors :as s]
-            ;[wgctrl.cluster.transforms :as t]
-            ;[wgctrl.cluster.ssh :as ssh]))
 
 (defonce api-server (atom nil))
 (defonce nrepl-server (atom nil))
@@ -37,6 +25,7 @@
 
     (@api-server :timeout 100)
     (reset! api-server nil)))
+
 
 (defn -main []
   (log/info "WGCTRL is running...")
