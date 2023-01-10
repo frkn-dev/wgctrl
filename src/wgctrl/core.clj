@@ -13,7 +13,6 @@
 (defonce nrepl-server (atom nil))
 (defonce config (atom nil))
 
-
 (defn stop-api-server []
   (when-not (nil? @api-server)
     ;; graceful shutdown: wait 100ms for existing requests to be finished
@@ -21,8 +20,6 @@
 
     (@api-server :timeout 100)
     (reset! api-server nil)))
-
-(-> state/cluster)
 
 (defn -main []
   (log/info "WGCTRL is running...")

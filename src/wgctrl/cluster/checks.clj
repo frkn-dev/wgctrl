@@ -15,8 +15,8 @@
 (defn node-registered? [cluster endpoint]
   (filter #(= endpoint (u/endpoints4 %))) (.nodes cluster))
 
-(defn peer-exists? [peer interface]
-  (not (empty? (filter #(= (.peer peer) (.peer %)) @(.peers interface)))))
+(defn peer-exists? [pubkey interface]
+  (not (empty? (filter #(= pubkey (.peer %)) @(.peers interface)))))
 
 (defn node-exists? [node cluster]
   (not (empty? (filter #(= (:uuid node) (.uuid %)) @(.nodes cluster)))))

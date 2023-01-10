@@ -5,10 +5,12 @@
   "Adds Peer to node's Interface,
    checks Peer is uniq by :peer field"
   [peer interface]
-  (if (c/peer-exists? peer interface)
-    interface
+  (if (c/peer-exists? (.peer peer) interface)
+    (do (swap! (.peers interface) (fn [s] (remove #(= (.peer %) (.peer peer)) s)))
+        (swap! (.peers interface) conj peer)
+      interface)
     (do (swap! (.peers interface) conj peer)
-        interface)))
+       interface)))
 
 (defn node->cluster
   "Adds Node to Cluster, 

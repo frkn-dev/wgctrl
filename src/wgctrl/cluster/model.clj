@@ -2,7 +2,7 @@
   (:require [wgctrl.cluster.transforms :as t]))
 
 (defrecord Interface [name subnet endpoint port key peers])
-(defrecord Peer [peer psk allowed-ips created-at])
+(defrecord Peer [peer allowed-ips created-at])
 (defrecord Node [uuid hostname interfaces dns location status weight])
 (defrecord Cluster [uuid nodes type balancers])
 
@@ -17,8 +17,8 @@
 (defn peer!
   "Creates Peer instance"
   [data]
-  (let [{:keys [peer psk ip]} data]
-    (->Peer peer psk ip (System/currentTimeMillis))))
+  (let [{:keys [peer ip]} data]
+    (->Peer peer ip (System/currentTimeMillis))))
 
 (defn interface!
   "Creates Interface instance"

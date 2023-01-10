@@ -19,24 +19,16 @@
 
 (defn peer!
   "Creates peer on WG node"
-  [keys interface ip]
-  (let [{:keys [client-pubkey client-key client-psk server-pubkey]} keys
-        pubkey server-pubkey 
-        f (str/replace client-psk #"/" "")]
-
-    (spit (str "/tmp/" f) client-psk)
-    (let [{:keys [err out exit]}
-          (shell/sh "scp" (str "/tmp/" f)
-                    (str "root@" (-> interface .endpoint :inet) ":/tmp"))]
-
-      (if (= 0 exit)
-        
-        (shell/sh "ssh" (str "root@" (-> interface .endpoint :inet))
-                  "wg" "set" (.name interface)
-                  "peer" client-pubkey
-                  "allowed-ips" (str ip "/32")
-                  "preshared-key"  (str "/tmp/" f))
-        {:err err :out out :exit exit}))))
+  [pubkey interface ip]
+  (println pubkey interface ip)
+  (println (str "ssh " (str "root@" (-> interface .endpoint :inet))
+            " wg" " set " (.name interface)
+            " peer " pubkey
+            " allowed-ips " (str ip "/32")))
+  (shell/sh "ssh" (str "root@" (-> interface .endpoint :inet))
+            "wg" "set" (.name interface)
+            "peer" pubkey
+            "allowed-ips" (str ip "/32")))
 
 (defn peers-stat
   "Gets real peers from WG interface "

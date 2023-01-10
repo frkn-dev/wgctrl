@@ -1,5 +1,5 @@
 (ns wgctrl.cluster.balancer
-  (:require [clojure.core.async :refer [chan dropping-buffer timeout go-loop put! <!]]
+  (:require [clojure.core.async :refer [chan dropping-buffer timeout go-loop put! <! <!!]]
             [clojure.core.async.impl.channels :as ch]
             [clojure.core.async.impl.protocols :as p]
             [wgctrl.cluster.selectors :as s]
@@ -29,6 +29,9 @@
                 (recur (<! in))))
      out))
 
+
+(defn next-node [b]
+  (<!! b))
 
 (defn balancers! [c]
   (let [nodes @(.nodes c)]

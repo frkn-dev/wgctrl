@@ -1,4 +1,4 @@
-(defproject wgctrl "0.1.0-SNAPSHOT"
+(defproject wgctrl "0.2.0-SNAPSHOT"
   :description "Controls WireGuard Cluster"
   :license {:name "GPL-2.0-or-later WITH Classpath-exception-2.0"}
   :dependencies [[org.clojure/clojure "1.11.1"]

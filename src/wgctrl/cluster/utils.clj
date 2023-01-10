@@ -15,7 +15,7 @@
           0 @(.interfaces node)))
 
 (defn endpoints4
-  "Gets intet emdpoint address"
+  "Gets inet endpoint address"
   [node]
   (map #(-> % :endpoint :inet) (.interfaces node)))
 

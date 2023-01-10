@@ -6,7 +6,7 @@
 
 (defroutes app-routes
   (GET "/" [] "<h2>=== Hello Fucking World!===</h2>")
-  (GET "/peer" {params :query-params}  handlers/peer)
+  (GET "/peer" [pubkey location]  handlers/peer)
   (GET "/stat" [] handlers/stat)
   (GET "/locations" [] handlers/locations)
   (not-found "<h1>Page not found</h1>"))
