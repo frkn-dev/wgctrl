@@ -5,18 +5,14 @@
             [org.httpkit.server :as httpkit]
             [wgctrl.http.routes :as routes]
             [wgctrl.cluster.state :as state]
+            [wgctrl.cluster.utils :as utils]
             [wgctrl.cluster.balancer :as b]))
 
 
 (defonce api-server (atom nil))
 (defonce nrepl-server (atom nil))
+(defonce config (atom nil))
 
-(def config {:nrepl {:bind "127.0.0.1" :port 7888}
-             :api-port 8080
-             :nodes [{:address "root@94.176.238.220"
-                      :location {:code "dev" :name "🏴‍☠️ Development"}
-                      :dns "1.1.1.1, 1.0.0.1"
-                      :weight 1}]})
 
 (defn stop-api-server []
   (when-not (nil? @api-server)
@@ -26,18 +22,22 @@
     (@api-server :timeout 100)
     (reset! api-server nil)))
 
+(-> state/cluster)
 
 (defn -main []
   (log/info "WGCTRL is running...")
-  (log/info (str "Using next configuration ->> " config))
 
-  (state/restore-state config)
+  (reset! config (utils/load-edn "./config.edn"))
+
+  (log/info (str "Using next configuration ->> " @config))
+
+  (state/restore-state @config)
   
-  (log/info "Listening nrepl port: " (:nrepl config))
-  (reset! nrepl-server (start-server (:nrepl config)))
+  (log/info "Listening nrepl port: " (:nrepl @config))
+  (reset! nrepl-server (start-server (:nrepl @config)))
 
-  (log/info "Listening api port: " (:api-port config))
-  (reset! api-server (httpkit/run-server #'routes/app {:port (:api-port config)})))
+  (log/info "Listening api port: " (:api-port @config))
+  (reset! api-server (httpkit/run-server #'routes/app {:port (:api-port @config)})))
 
 
 

@@ -51,7 +51,7 @@
                    :headers {"Content-Type" "application/json; charset=utf-8"
                              "Access-Control-Allow-Origin" "*"}
                    :body (json/generate-string
-                          {:interface {:address (str ip "/24")
+                          {:iface {:address (str ip "/24")
                                        :key client-key 
                                        :dns (:dns node)}
                            :peer {:pubkey server-pubkey 

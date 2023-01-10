@@ -9,6 +9,7 @@
 
 
 (defn weighted-round-robin
+  ; todo - sort nodes by weight
   "A simple weighted round-robin load balancer."
   [nodes]
   (let [in (chan (dropping-buffer 1000))
