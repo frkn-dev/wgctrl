@@ -64,10 +64,11 @@
      :headers {"Content-Type" "application/json; charset=utf-8"
                "Access-Control-Allow-Origin" "*"}}))
 
+
 (defn locations [request]
   (let [locations (s/available-locations @(.nodes state/cluster))]
     (log/info (str "GET /locations " request " - " locations))
-    {:body (json/generate-string (vec locations))
+    {:body (json/generate-string (vec (reverse (sort-by :code locations))))
      :code 200
      :headers {"Content-Type" "application/json; charset=utf-8"
                "Access-Control-Allow-Origin" "*"}}))

@@ -65,15 +65,16 @@
 
 (defn subnet [iface]
   "Returns Subnet of WG Interface"
-	(->> 
+	(let [s (->> 
 	  (-> (str "/etc/wireguard/" iface ".conf") 
   	     slurp
   	     (str/split #"\n"))
-	  (map #(str/split % #" "))
+	  (map #(str/split % #" = "))
     (filter #(= (first %) "Address"))
     first
-    (take-last 2)
-    (zipmap [:inet :inet6])))
+    last)]
+    (zipmap [:inet :inet6] (str/split s #"," ))))
+
 
 (defn wg-installed? []
   (fs/exists? "/etc/wireguard"))

@@ -20,11 +20,6 @@
 (defn peer!
   "Creates peer on WG node"
   [pubkey interface ip]
-  (println pubkey interface ip)
-  (println (str "ssh " (str "root@" (-> interface .endpoint :inet))
-            " wg" " set " (.name interface)
-            " peer " pubkey
-            " allowed-ips " (str ip "/32")))
   (shell/sh "ssh" (str "root@" (-> interface .endpoint :inet))
             "wg" "set" (.name interface)
             "peer" pubkey
@@ -42,6 +37,7 @@
        (mapv #(apply concat %))
        (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
 
+
 (defn peers
   "Gets real peers from WG interface "
   [^String endpoint ^String interface]
@@ -51,8 +47,9 @@
          (drop 1) ; drop interface record
          (map #(str/split % #"\n"))
          (map (fn [x]  (map #(str/split % #" = ") x)))
-         (map (fn [x] (map #(last %) x))) ; drop keys
-         (map #(zipmap [:peer :psk :ip ] %)))
+         (map (fn [x] (map #(hash-map (keyword (str/lower-case (first %))) (last %))x)))
+         (map (fn [x] (apply conj x)))
+         (map (fn [x] {:peer (:publickey x) :ip (:allowedips x)})))
       nil)))
 
 (defn delete-peer [^String endpoint ^String interface ^String peer]

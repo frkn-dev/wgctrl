@@ -13,6 +13,9 @@
 (defonce nrepl-server (atom nil))
 (defonce config (atom nil))
 
+(-> state/cluster .nodes
+  deref )
+
 (defn stop-api-server []
   (when-not (nil? @api-server)
     ;; graceful shutdown: wait 100ms for existing requests to be finished
