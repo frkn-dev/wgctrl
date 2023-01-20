@@ -9,8 +9,8 @@
   (filter #(= location (-> % .location :code)) nodes))
 
 (defn uuid-nodes-by-location [nodes location]
-  (let [n (->> nodes (filter #(= location (-> % .location :code))))]
-    (map #(zipmap [:uuid :weight :hostname] [(.uuid %) (.weight %) (.hostname %)]) n)))
+  (let [n (->> nodes (filter #(= location (-> % :location))))]
+    (mapv #(zipmap [:uuid :weight :hostname :location] [(:uuid %) (:weight %) (:hostname %) (-> % :location)]) n)))
 
 (defn node-by-uuid [nodes uuid]
   (filter #(= uuid (-> % .uuid)) nodes))

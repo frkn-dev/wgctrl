@@ -3,7 +3,9 @@
             [wgctrl.cluster.transforms :as t]
             [wgctrl.cluster.selectors :as s]
             [wgctrl.cluster.model :as m]
-            [wgctrl.cluster.balancer :as b]))
+            [wgctrl.cluster.balancer :as b]
+
+            [clojure.core.async :refer [chan timeout go-loop <! >! >!! <!!]]))
 
 (defonce cluster (m/cluster!))
 
@@ -30,4 +32,5 @@
   (dorun (restore-peers cluster))
   
    ; Create initial balancers
-  (dorun (b/balancers! cluster)))
+  (dorun (b/balancer! cluster)))
+

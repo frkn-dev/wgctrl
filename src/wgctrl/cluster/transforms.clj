@@ -25,7 +25,7 @@
   "Adds Balancer to Cluster, 
    checks node is uniq by UUID"
   [balancer cluster]
-  (swap! (.balancers cluster) conj balancer)
+  (swap! (.balancer cluster) conj balancer)
         nil)
 
 (defn interface->node

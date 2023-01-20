@@ -4,7 +4,7 @@
 (defrecord Interface [name subnet endpoint port key peers])
 (defrecord Peer [peer allowed-ips created-at])
 (defrecord Node [uuid hostname interfaces dns location status weight])
-(defrecord Cluster [uuid nodes type balancers])
+(defrecord Cluster [uuid nodes type balancer])
 
 
 (defn cluster!
