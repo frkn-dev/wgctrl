@@ -18,7 +18,7 @@
         location (keyword (or (-> params :location) "all"))
         pubkey (-> params :pubkey)]
 
-    (if (nil? (location @(.balancers state/cluster)))
+    (if (nil? (location @(.balancer state/cluster)))
       {:code 200
        :headers {"Content-Type" "application/json; charset=utf-8"
                    "Access-Control-Allow-Origin" "*"}
@@ -26,7 +26,7 @@
                                     :err "Can't create peer"
                                     :message (str "Node within location " location " not found")})}
 
-    (let [node-uuid (:uuid (<!! (location @(.balancers state/cluster) )))
+    (let [node-uuid (:uuid (<!! (location @(.balancer state/cluster) )))
           node (s/node-by-uuid @(.nodes state/cluster) node-uuid)
           interface (s/interface-with-min-peers node)]
 

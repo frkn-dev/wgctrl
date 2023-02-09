@@ -38,6 +38,24 @@
        (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
 
 
+(defn latest-peers [e i]
+  (->> (-> (shell/sh "ssh" e "wg" "show" i "latest-handshakes") :out
+      (str/split #"\n"))
+  (map #(str/split % #"\t"))
+  (map #(zipmap [:peer :latest] %))
+
+  ))
+
+
+
+(def ps (latest-peers "root@195.2.71.41" "wg0"))
+(-> ps)
+
+(filter #(= "0" (:latest %)) ps)
+
+(count (filter #(nil? (:allowed %)) ps))
+(map (fn [x] (:allowed x)) (filter #(not(nil? (:allowed %))) ps))
+
 (defn peers
   "Gets real peers from WG interface "
   [^String endpoint ^String interface]
@@ -46,7 +64,7 @@
       (->> (str/split out #"\[Peer\]\n")
          (drop 1) ; drop interface record
          (map #(str/split % #"\n"))
-         (map (fn [x]  (map #(str/split % #" = ") x)))
+         (map (fn [x] (map #(str/split % #" = ") x)))
          (map (fn [x] (map #(hash-map (keyword (str/lower-case (first %))) (last %))x)))
          (map (fn [x] (apply conj x)))
          (map (fn [x] {:peer (:publickey x) :ip (:allowedips x)})))
