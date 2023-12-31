@@ -1,6 +1,8 @@
 {:nrepl {:bind "127.0.0.1" :port 7888}
              :api-port 8080
-             :nodes [{:address "root@XX.XX.XX.YY"
+             :nodes [{:address "XX.XX.XX.YY"
+                      :user "root"
                       :location {:code "dev" :name "🏴‍☠️ Development"}
                       :dns "1.1.1.1, 1.0.0.1"
-                      :weight 2}]}
+                      :weight 2
+                      :active true}]}

@@ -1,5 +1,7 @@
 (ns wgctrl.cluster.ipcalc
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str])
+  (:import java.net.InetAddress)
+  (:import java.net.Inet4Address))
 
 (defn addr->string
   "Transofrms IP address from vector to string"
@@ -12,10 +14,10 @@
   "Transforms IP address from string to vector"
   [a]
   (let [a' (->>
-            (str/split a #"/")
-            first)]
+             (str/split a #"/")
+             first)]
     (->> (str/split a' #"\.")
-         (mapv #(Integer/parseInt %)))))
+      (mapv #(Integer/parseInt %)))))
 
 (defn int->addr
   "Transforms IP address from uint to string"
@@ -23,9 +25,9 @@
   (if (nil? i)
     nil
     (addr->string [(bit-shift-right (bit-and i 0xff000000) 24)
-                 (bit-shift-right (bit-and i 0x00ff0000) 16)
-                 (bit-shift-right (bit-and i 0x0000ff00) 8)
-                 (bit-and i 0x000000ff)])))
+                   (bit-shift-right (bit-and i 0x00ff0000) 16)
+                   (bit-shift-right (bit-and i 0x0000ff00) 8)
+                   (bit-and i 0x000000ff)])))
 
 (defn addr->int
   "Transforms IP address from string to uint"
@@ -34,10 +36,10 @@
     nil
     (let [a' (addr->vec a)]
       (bit-or
-       (bit-shift-left (nth a' 0) 24)
-       (bit-shift-left (nth a' 1) 16)
-       (bit-shift-left (nth a' 2) 8)
-       (nth a' 3)))))
+        (bit-shift-left (nth a' 0) 24)
+        (bit-shift-left (nth a' 1) 16)
+        (bit-shift-left (nth a' 2) 8)
+        (nth a' 3)))))
 
 (defn addr++
   "Increments IP address"
@@ -68,10 +70,10 @@
   "Cuts mask of subnet from address"
   [subnet]
   (->
-   (str/split subnet #"/")
-   last
-   (str/replace #"," "")
-   (Integer/parseInt)))
+    (str/split subnet #"/")
+    last
+    (str/replace #"," "")
+    (Integer/parseInt)))
 
 (defn addr
   "Cuts address of subnet from mask"
@@ -79,10 +81,11 @@
   (if (nil? subnet)
     nil
     (->>
-     (str/split subnet #"/")
-     first)))
+      (str/split subnet #"/")
+      first)))
 
 (defn size
   "Calculates size of subnet by mask"
   [mask]
   (- (Math/pow 2 (- 32 mask)) 2))
+  

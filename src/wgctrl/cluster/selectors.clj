@@ -1,6 +1,6 @@
 (ns wgctrl.cluster.selectors
   (:require [wgctrl.cluster.checks :as c]
-            [wgctrl.cluster.utils :as u]))
+    [wgctrl.cluster.utils :as u]))
 
 (defn interface-by-name [name node]
   (first (filter #(= name (:name %)) @(.interfaces node))))
@@ -51,17 +51,13 @@
 
 (defn peers-never-connected [data]
   (->> data
-       (filter #(nil? (:latest %)))
-       (map #(:peer %))))
+    (filter #(nil? (:latest %)))
+    (map #(:peer %))))
 
 (defn peers-connected [data]
   (->> data
-       (remove #(nil? (:latest %)))
+    (remove #(nil? (:latest %)))
 
-       (map #({:peer (:peer %)
-               :latest (:latest %)
-               :traffic (:traffic %)}))))
-
-
-
-
+    (map #({:peer (:peer %)
+            :latest (:latest %)
+            :traffic (:traffic %)}))))

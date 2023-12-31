@@ -30,7 +30,8 @@
                                 (-> x
                                     .allowed-ips
                                     ip/addr
-                                    ip/addr->int)) (filter #(not (nil? (.allowed-ips %))) @(.peers interface)))
+                                    ip/addr->int)) (filter #(and (not(= "(none)" (.allowed-ips %)))
+                                                              (not (nil? (.allowed-ips %)))) @(.peers interface)))
                          sort
                          (map #(ip/int->addr %)))]
       (cond
@@ -39,6 +40,8 @@
         :else (ip/addr++ (reduce (fn [a a'] (if (> (Math/abs (ip/addr- a' a)) 1)
                                               a
                                               a')) (first addresses) (rest addresses)))))))
+
+
 
 
 (defn load-edn

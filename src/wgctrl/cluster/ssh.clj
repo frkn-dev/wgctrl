@@ -1,80 +1,96 @@
 (ns wgctrl.cluster.ssh
   (:require [clojure.edn :as edn]
-            [clojure.java.shell :as shell]
-            [clojure.string :as str]
-            [wgctrl.cluster.selectors :as s])
+    [clojure.java.shell :refer [sh]]
+    [clojure.string :as str]
+    [wgctrl.cluster.selectors :as s])
   (:use [clojure.walk :only [keywordize-keys]]))
 
+
+(defn run-remote-script-bb [node script]
+  (let [{:keys [address user]} node
+        remote-command (str "ssh "user "@" address " 'bb' < " script)]
+    (sh "/bin/bash" "-c" remote-command)))
+
+(defn run-remote-script-sh-docker [interface script ip]
+  (let [remote-command (str "ssh root@" (:endpoint interface) " 'docker exec -i' " (:container interface) " bash -s < " script " " ip)]
+    (sh "/bin/bash" "-c" remote-command)))
+
+(defn register-node [node]
+  (run-remote-script-bb node "./scripts/node-register-amnezia.bb"))
+
+(defn node-registered? [node]
+  (let [{:keys [exit]} (run-remote-script-bb node "./scripts/node-registered-check.bb")]
+    (if (zero? exit)
+      true
+      false)))
+
 (defn node-reg-data
-  "Gets data from node"
+  "Gets data from node or register node"
   [node]
-  (let [{:keys [location dns weight]} node]
-   ; (println location dns weight)
-    (-> (shell/sh "ssh" (:address node) "cat" "/root/.wg-node")
+  (let [{:keys [address user location dns weight]} node]
+    ; (println location dns weight)
+    (if (node-registered? node) 
+      (-> (sh "ssh" (str user "@" address) "cat" "/root/.wg-node")
         :out
         (edn/read-string)
         (conj {:location location})
         (conj {:dns dns})
-        (conj {:weight weight}))))
-
-(defn peer!
-  "Creates peer on WG node"
-  [pubkey interface ip]
-  (shell/sh "ssh" (str "root@" (-> interface .endpoint :inet))
-            "wg" "set" (.name interface)
-            "peer" pubkey
-            "allowed-ips" (str ip "/32")))
-
-(defn peers-stat
-  "Gets real peers from WG interface "
-  [^String endpoint ^String interface]
-  (->> (-> (shell/sh "ssh" endpoint "wg" "show" interface) :out
-           (str/split #"\n\n"))
-       (map #(str/split % #"\n"))
-       (map (fn [x] (map #(str/split % #": ") x)))
-       (drop 1)  ; drop interface record
-       (map (fn [x] (map #(drop 1 %) x)))  ; drop keys 
-       (mapv #(apply concat %))
-       (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
+        (conj {:weight weight}))
+      (do (register-node node)
+        (node-reg-data node)))))
 
 
-(defn latest-peers [e i]
-  (->> (-> (shell/sh "ssh" e "wg" "show" i "latest-handshakes") :out
-      (str/split #"\n"))
-  (map #(str/split % #"\t"))
-  (map #(zipmap [:peer :latest] %))
+(defn peer! [node ip]
+  (-> (run-remote-script-sh-docker node "./scripts/create-peer.sh" ip)
+    :out 
+    (edn/read-string)))
 
-  ))
-
-
-
-(def ps (latest-peers "root@195.2.71.41" "wg0"))
-(-> ps)
-
-(filter #(= "0" (:latest %)) ps)
-
-(count (filter #(nil? (:allowed %)) ps))
-(map (fn [x] (:allowed x)) (filter #(not(nil? (:allowed %))) ps))
 
 (defn peers
   "Gets real peers from WG interface "
-  [^String endpoint ^String interface]
-  (let [{:keys [err exit out]} (shell/sh "ssh" endpoint "wg" "showconf" interface)]
+  [interface]
+  (let [e (str "root@" (-> interface :endpoint))
+        c (:container interface)
+        {:keys [err exit out]} (sh "ssh" e "docker" "exec"  c "wg")]
     (if (= exit 0 )
-      (->> (str/split out #"\[Peer\]\n")
-         (drop 1) ; drop interface record
-         (map #(str/split % #"\n"))
-         (map (fn [x] (map #(str/split % #" = ") x)))
-         (map (fn [x] (map #(hash-map (keyword (str/lower-case (first %))) (last %))x)))
-         (map (fn [x] (apply conj x)))
-         (map (fn [x] {:peer (:publickey x) :ip (:allowedips x)})))
-      nil)))
+      (let [raw (->> (str/split out #"\n")
+                  (filter #(or (str/starts-with? % "peer")
+                             (str/includes? % "allow")))
+                  (map #(str/split % #":"))
+                  (mapv (fn [[k v]] { (keyword (str/replace (str/trim k) #" " "")) (str/trim v) })))]
+          
+        (loop [ps raw
+               acc []]
+          (if (empty? ps)
+            acc
+        
+              
+            (recur (drop 2 ps) (conj acc {:peer  (first (vals (first (take 2 ps)))) :ip (first (vals (second (take 2 ps))))}))))))))
 
-(defn delete-peer [^String endpoint ^String interface ^String peer]
-  (-> (shell/sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))
 
 
+(comment "Fix this "
+  (defn delete-peer [^String endpoint ^String interface ^String peer]
+    (-> (sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))
 
+
+  (defn peers-stat
+    "Gets real peers from WG interface "
+    [^String endpoint ^String interface]
+    (->> (-> (sh "ssh" endpoint "wg" "show" interface) :out
+           (str/split #"\n\n"))
+      (map #(str/split % #"\n"))
+      (map (fn [x] (map #(str/split % #": ") x)))
+      (drop 1)  ; drop interface record
+      (map (fn [x] (map #(drop 1 %) x)))  ; drop keys 
+      (mapv #(apply concat %))
+      (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
+
+  (defn latest-peers [e i]
+    (->> (-> (sh "ssh" e "wg" "show" i "latest-handshakes") :out
+           (str/split #"\n"))
+      (map #(str/split % #"\t"))
+      (map #(zipmap [:peer :latest] %)))))
 
 
 

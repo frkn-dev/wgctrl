@@ -7,10 +7,10 @@
   [peer interface]
   (if (c/peer-exists? (.peer peer) interface)
     (do (swap! (.peers interface) (fn [s] (remove #(= (.peer %) (.peer peer)) s)))
-        (swap! (.peers interface) conj peer)
+      (swap! (.peers interface) conj peer)
       interface)
     (do (swap! (.peers interface) conj peer)
-       interface)))
+      interface)))
 
 (defn node->cluster
   "Adds Node to Cluster, 
@@ -19,14 +19,14 @@
   (if (c/node-exists? node cluster)
     cluster
     (do (swap! (.nodes cluster) conj node)
-        cluster)))
+      cluster)))
 
 (defn balancer->cluster
   "Adds Balancer to Cluster, 
    checks node is uniq by UUID"
   [balancer cluster]
   (swap! (.balancer cluster) conj balancer)
-        nil)
+  nil)
 
 (defn interface->node
   "Adds Interface to Node"
