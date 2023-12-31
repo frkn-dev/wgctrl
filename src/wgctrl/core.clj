@@ -60,8 +60,6 @@
   (reset! api-server (httpkit/run-server #'routes/app {:port (:api-port @config)})))
 
 
-(-main)
-
 (comment 
   
   (-> state/cluster .nodes)
