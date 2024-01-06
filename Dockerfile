@@ -1,13 +1,15 @@
 FROM clojure:openjdk-17-lein-2.9.5-slim-buster
 WORKDIR /usr/app
 COPY . .
-CMD [ "lein", "uberjar" ]
+RUN lein uberjar
 
 FROM openjdk:17-alpine
 WORKDIR /usr/app
 RUN apk update && \
-  apk add openssh-client
-COPY --from=0 /usr/app/example-config.edn /usr/app/config.edn
-COPY --from=0 /usr/app/target/uberjar /usr/app
+  apk add openssh-client && \
+  apk add bash
+COPY --from=0 /usr/app/target/uberjar/*.jar /usr/app
+COPY --from=0 /usr/app/scripts /usr/app/scripts
 EXPOSE 8080
-CMD [ "java", "-jar", "wgctrl-0.2.0-SNAPSHOT-standalone.jar" ]
+RUN ls
+CMD [ "java", "-jar", "wgctrl-0.2.1-SNAPSHOT-standalone.jar" ]
