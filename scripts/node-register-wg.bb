@@ -10,9 +10,9 @@
            '[cheshire.core :as json])
 (use '[clojure.walk :only [keywordize-keys]])
 
-(def amnezia-wg-config-filename "/opt/amnezia/wireguard/wg0.conf")
-(def amnezia-wg-config-public   "/opt/amnezia/wireguard/wireguard_server_public_key.key")
-(def amnezia-wg-config-psk      "/opt/amnezia/wireguard/wireguard_psk.key")
+(def wg-config-filename "/opt/amnezia/wireguard/wg0.conf")
+(def wg-config-public   "/opt/amnezia/wireguard/wireguard_server_public_key.key")
+(def wg-config-psk      "/opt/amnezia/wireguard/wireguard_psk.key")
 
 (defn oq [query]
   (let [{:keys [exit out err]} (sh "osqueryi" "--json" query)]
@@ -36,7 +36,7 @@
      :dev))
 
 (defn wg-node-registered? []
-  (let [f (str (System/getenv "HOME") "/.wg-node")]
+  (let [f (str (System/getenv "HOME") "/.wg-node2")]
     (and (fs/exists? f)
          (> (fs/size f) 0))))
 
@@ -46,17 +46,17 @@
     first))
 
 
-(defn amnezia-wg-container-id []
+(defn wg-container-id []
   (:id (first (oq (str "SELECT name, id from docker_containers where name = '/amnezia-wireguard'" )))))
 
-(defn amnezia-wg-file [container file] 
+(defn wg-file [container file] 
   (let [{:keys [exit out err]} (sh "/usr/bin/docker" "exec" container "cat" file )]
     (if (zero? exit)
        out
       (println (str "ERROR Getting Amneia WG Config -> " err )))))
 
 
-(defn amnezia-wg-port [config]
+(defn wg-port [config]
   "Return Port of WG interface"
   (->> 
     (-> config
@@ -66,7 +66,7 @@
     first
     last))
 
-(defn amnezia-wg-subnet [config]
+(defn wg-subnet [config]
   "Returns Subnet of WG Interface"
   (let [s (->> 
     (-> config
@@ -77,23 +77,21 @@
     last)]
     (zipmap [:inet :inet6] (str/split s #"," ))))
 
-(defn amnezia-wg-settings [interface]
-  (let [config (amnezia-wg-file (amnezia-wg-container-id) amnezia-wg-config-filename)]
+(defn wg-settings [interface]
+  (let [config (wg-file (wg-container-id) wg-config-filename)]
   {:name interface,
-   :subnet (amnezia-wg-subnet config),
-   :container_id (amnezia-wg-container-id)
-   :port (amnezia-wg-port config)
-   :public-key (-> (amnezia-wg-file (amnezia-wg-container-id) amnezia-wg-config-public)
+   :subnet (-> (wg-subnet config) :inet),
+   :container_id (wg-container-id)
+   :port (wg-port config)
+   :public-key (-> (wg-file (wg-container-id) wg-config-public)
                  str/trim-newline)
-   :psk (-> (amnezia-wg-file (amnezia-wg-container-id) amnezia-wg-config-psk)
-            str/trim-newline)
-   :type "amnezia-wg"}))
+   :psk (-> (wg-file (wg-container-id) wg-config-psk)
+            str/trim-newline)}))
 
 (defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
-
 (defn -main []
-  (let [f (str (System/getenv "HOME") "/.wg-node")
+  (let [f (str (System/getenv "HOME") "/.wg-node2")
         i (default-interface)
         e (ip-addr i)
         u (uuid)
@@ -101,7 +99,7 @@
     (if (wg-node-registered?) 
             (do (println "Node already registered")
                 (System/exit 255))
-            (do (spit f {:uuid u :hostname h :default-interface i :interfaces [(conj (amnezia-wg-settings "wg0") {:endpoint (:address e)})]})
+            (do (spit f {:uuid u  :type "wg" :hostname h :default-interface i :wg (wg-settings "wg0") :user "root" :endpoint (:address e)} )
                 (System/exit 0)
           ))))
 

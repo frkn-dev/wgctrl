@@ -1,12 +1,12 @@
-(ns wgctrl.cluster.stat)
+(ns wgctrl.cluster.stat
+  (:require [wgctrl.cluster.nodes :refer [nodes]]))
 
-(defn node 	[nodes]
-  (reduce (fn [acc i]
-            (conj acc {:name (.name i)
-                       :peers (count @(.peers i))})) [] @(.interfaces nodes)))
+(defn node-stat [nodes]
+    nodes)
 
-(defn cluster [nodes]
-  (reduce (fn [s n]
-            (conj s {:node (.uuid n)
-                     :hostname (:hostname n)
-                     :stat (node n)})) [] nodes))
+
+
+
+
+
+

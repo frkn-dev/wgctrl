@@ -87,5 +87,4 @@
 (defn size
   "Calculates size of subnet by mask"
   [mask]
-  (- (Math/pow 2 (- 32 mask)) 2))
-  
+  (- (Math/pow 2 (- 32 mask)) 2))  

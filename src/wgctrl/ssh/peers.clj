@@ -1,56 +1,22 @@
-(ns wgctrl.cluster.ssh
+(ns wgctrl.ssh.peers
   (:require [clojure.edn :as edn]
     [clojure.java.shell :refer [sh]]
     [clojure.string :as str]
-    [wgctrl.cluster.selectors :as s])
+    [wgctrl.ssh.common :as ssh])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 
-(defn run-remote-script-bb [node script]
-  (let [{:keys [address user]} node
-        remote-command (str "ssh "user "@" address " 'bb' < " script)]
-    (sh "/bin/bash" "-c" remote-command)))
-
-(defn run-remote-script-sh-docker [interface script ip]
-  (let [remote-command (str "ssh root@" (:endpoint interface) " 'docker exec -i' " (:container interface) " bash -s < " script " " ip)]
-    (sh "/bin/bash" "-c" remote-command)))
-
-(defn register-node [node]
-  (run-remote-script-bb node "./scripts/node-register-amnezia.bb"))
-
-(defn node-registered? [node]
-  (let [{:keys [exit]} (run-remote-script-bb node "./scripts/node-registered-check.bb")]
-    (if (zero? exit)
-      true
-      false)))
-
-(defn node-reg-data
-  "Gets data from node or register node"
-  [node]
-  (let [{:keys [address user location dns weight]} node]
-    ; (println location dns weight)
-    (if (node-registered? node) 
-      (-> (sh "ssh" (str user "@" address) "cat" "/root/.wg-node")
-        :out
-        (edn/read-string)
-        (conj {:location location})
-        (conj {:dns dns})
-        (conj {:weight weight}))
-      (do (register-node node)
-        (node-reg-data node)))))
-
-
 (defn peer! [node ip]
-  (-> (run-remote-script-sh-docker node "./scripts/create-peer.sh" ip)
+  (-> (ssh/run-remote-script-sh-docker node "./scripts/create-peer.sh" ip)
     :out 
     (edn/read-string)))
 
 
 (defn peers
   "Gets real peers from WG interface "
-  [interface]
-  (let [e (str "root@" (-> interface :endpoint))
-        c (:container interface)
+  [node]
+  (let [e (str (:user node) "@" (:endpoint node))
+        c (-> node :interface :container)
         {:keys [err exit out]} (sh "ssh" e "docker" "exec"  c "wg")]
     (if (= exit 0 )
       (let [raw (->> (str/split out #"\n")
@@ -63,9 +29,7 @@
                acc []]
           (if (empty? ps)
             acc
-        
-              
-            (recur (drop 2 ps) (conj acc {:peer  (first (vals (first (take 2 ps)))) :ip (first (vals (second (take 2 ps))))}))))))))
+            (recur (drop 2 ps) (conj acc {:node-id (:uuid node) :peer  (first (vals (first (take 2 ps)))) :ip (first (vals (second (take 2 ps))))}))))))))
 
 
 
@@ -91,12 +55,3 @@
            (str/split #"\n"))
       (map #(str/split % #"\t"))
       (map #(zipmap [:peer :latest] %)))))
-
-
-
-
-
-
-
-
-

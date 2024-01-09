@@ -2,12 +2,11 @@
   (:require [clojure.core.async :refer [chan timeout go-loop <! >! >!! <!!]]
     [clojure.core.async.impl.channels :as ch]
     [clojure.core.async.impl.protocols :as p]
-    [wgctrl.cluster.selectors :as s]
-    [wgctrl.cluster.transforms :as t]))
+    [mount.core :refer [defstate]]
+    [wgctrl.cluster.nodes :refer [nodes nodes-active locations]]))
 
 
 (defn weighted-round-robin
-  ; todo - sort nodes by weight
   "A simple weighted round-robin load balancer."
   [nodes]
   (let [buf 1000
@@ -23,20 +22,25 @@
 
     ch))
 
+(defn nodes->balancer 
+  ([nodes location]
+   (let [nodes' (filter #(= location (-> % :location :code)) nodes)]
+     (mapv #(zipmap [:uuid :weight :hostname :location] 
+              [(:uuid %) (:weight %) (:hostname %) (-> % :location :code )]) nodes')))
+  ([nodes]
+   (mapv #(zipmap [:uuid :weight :hostname :location] 
+            [(:uuid %) (:weight %) (:hostname %) (-> % :location :code )]) nodes)))
 
-(defn next-node [b]
-  (<!! b))
+(defn balancers! [nodes]
+  (let [nodes' (nodes-active nodes)]
+    (reduce (fn [acc l] (conj acc {(keyword (:code l)) (weighted-round-robin (nodes->balancer nodes' (:code l)))}))
+      {:all (weighted-round-robin (nodes->balancer nodes'))} (-> nodes' locations))))
 
-(defn balancer! [c]
-  (let [nodes (map (fn [x] 
-                     {:uuid (-> x .uuid ) 
-                      :hostname (-> x .hostname ) 
-                      :weight (-> x .weight )
-                      :location (-> x .location :code )})  @(.nodes c))]
-    (t/balancer->cluster {:all (weighted-round-robin (vec nodes))} c)
 
-    (for [loc (s/available-locations nodes)]
-      (t/balancer->cluster {(keyword loc) (weighted-round-robin 
-                                            (s/uuid-nodes-by-location nodes loc))} c))))
+(defstate balancers :start (balancers! nodes)
+  :stop {})
+
+
+
 
 

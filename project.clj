@@ -7,7 +7,9 @@
                  [org.clojure/core.async "1.6.673"]
                  [compojure "1.7.0"]
                  [nrepl "1.0.0"]
-                 [cheshire "5.11.0"]]    
+                 [cheshire "5.11.0"]
+                 [mount "0.1.16"]
+                 [org.clojure/tools.namespace "1.4.4"]]    
   :plugins [[lein-cljfmt "0.9.0"]]                              
   :main ^:skip-aot wgctrl.core
   :target-path "target/%s"

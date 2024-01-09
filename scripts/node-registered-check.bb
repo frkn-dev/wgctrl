@@ -3,7 +3,7 @@
 (require '[babashka.fs :as fs])
 
 (defn registered? []
-  (fs/exists? "/root/.wg-node"))
+  (fs/exists? "/root/.wg-node2"))
 
 
 (defn -main []

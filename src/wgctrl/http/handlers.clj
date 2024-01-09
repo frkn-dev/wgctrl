@@ -1,23 +1,39 @@
 (ns wgctrl.http.handlers
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [cheshire.core :as json]
-            [clojure.core.async :refer [<!!]]
-            [wgctrl.cluster.model :as m]
-            [wgctrl.cluster.transforms :as t]
-            [wgctrl.cluster.selectors :as s]
-            [wgctrl.cluster.ssh :as ssh]
-            [wgctrl.cluster.stat :as stat]
-            [wgctrl.cluster.utils :as utils]
-            [wgctrl.cluster.state :as state])
+    [clojure.tools.logging :as log]
+    [cheshire.core :as json]
+    [clojure.core.async :refer [<!!]]
+    [wgctrl.cluster.balancer :refer [balancers]]
+    [wgctrl.cluster.nodes :refer [nodes locations node-by-uuid]]
+    [wgctrl.cluster.peers :refer [addr! peer!]]
+    [wgctrl.cluster.stat :as stat]
+    [wgctrl.ssh.peers :as ssh])
   (:use [clojure.walk :only [keywordize-keys]]))
 
+
+(defn locs [request]
+  (let [locations' (locations nodes)]
+    (log/info (str "GET /locations " request " - " locations'))
+    {:body (json/generate-string (vec (reverse (sort-by :code locations'))))
+     :code 200
+     :headers {"Content-Type" "application/json; charset=utf-8"
+               "Access-Control-Allow-Origin" "*"}}))
+
+
+(defn stat [request]
+  (log/info (str "GET /stat " request ))
+  {:body (json/generate-string (stat/node-stat nodes))
+   :code 200
+   :headers {"Content-Type" "application/json; charset=utf-8"
+             "Access-Control-Allow-Origin" "*"}})
+
+         
 (defn peer [req]
   (let [params (-> req :params keywordize-keys)
-        location (keyword (or (-> params :location) "all"))
+        location (keyword (or (:location params ) "all"))
         pubkey (-> params :pubkey)]
 
-    (if (nil? (location @(.balancer state/cluster)))
+    (if (nil? (location balancers))
       {:code 200
        :headers {"Content-Type" "application/json; charset=utf-8"
                  "Access-Control-Allow-Origin" "*"}
@@ -25,43 +41,37 @@
                                     :err "Can't create peer"
                                     :message (str "Node within location " location " not found")})}
 
-      (let [node-uuid (:uuid (<!! (location @(.balancer state/cluster) )))
-            node (s/node-by-uuid @(.nodes state/cluster) node-uuid)
-            interface (s/interface-with-min-peers node)
-            ip (utils/addr! interface)]
-      
-        (let [peer (ssh/peer! interface ip)]
-          (t/peer->interface (m/peer! {:peer (:peer peer)  :ip (str ip "/32")}) interface)
-          (log/info (str "GET /peer?location=" location " - "
-                      peer  " "
-                      (str ip "/32")))
+      (let [node-uuid (:uuid (<!! (location balancers)))
+            node (node-by-uuid nodes node-uuid)
+            ip (addr! node)]
+        
+        (if (nil? ip)
           {:code 200
            :headers {"Content-Type" "application/json; charset=utf-8"
                      "Access-Control-Allow-Origin" "*"}
-           :body (json/generate-string
-                   {:iface {:address (str ip "/24")
-                            :key  (:private peer)
-                            :dns (.dns node)}
-                    :peer {:pubkey (.key interface) 
-                           :psk (.psk interface)
-                           :allowed_ips "0.0.0.0/0"
-                           :endpoint (str (-> interface .endpoint) ":"
-                                       (-> interface .port))}})})))))
+           :body (json/generate-string {:code 10
+                                        :err "Can't create peer"
+                                        :message (str "Not enough IP addresses on Node")})}
+          
 
-(defn stat [request]
-  (let [stat (stat/cluster @(.nodes state/cluster))]
-    (log/info (str "GET /stat " request " - " stat))
-    {:body (json/generate-string (conj {:uuid (.uuid state/cluster)} {:nodes stat}))
-     :code 200
-     :headers {"Content-Type" "application/json; charset=utf-8"
-               "Access-Control-Allow-Origin" "*"}}))
+          
+          (let [peer (ssh/peer! node ip)]
+            ;peer ip node-id
+            (peer! {:peer (:peer peer)  :ip (str ip "/32") :node-id (:uuid node)})
+            (log/info (str "GET /peer?location=" location " - " peer  " " (str ip "/32")))
+          
+            {:code 200
+             :headers {"Content-Type" "application/json; charset=utf-8"
+                       "Access-Control-Allow-Origin" "*"}
+             :body (json/generate-string
+                     {:iface {:address (str ip "/24")
+                              :key  (:private peer)
+                              :dns (:dns node)}
+                      :peer {:pubkey (-> node :interface :public-key) 
+                             :psk (-> node :interface :psk) 
+                             :allowed_ips "0.0.0.0/0"
+                             :endpoint (str (-> node :endpoint)  ":"
+                                         (-> node :interface :port))}})}))))))
 
 
-(defn locations [request]
-  (let [locations (s/available-locations @(.nodes state/cluster))]
-    (log/info (str "GET /locations " request " - " locations))
-    {:body (json/generate-string (vec (reverse (sort-by :code locations))))
-     :code 200
-     :headers {"Content-Type" "application/json; charset=utf-8"
-               "Access-Control-Allow-Origin" "*"}}))
 
