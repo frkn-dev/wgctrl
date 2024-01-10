@@ -71,6 +71,23 @@
    (start)
    (reset)
   
+  (first nodes)
+  
+  (defn peers-stat
+    "Gets real peers from WG interface "
+    [node]
+    (->> (-> (sh "ssh" (str (:user node) "@" (:endpoint node)) "docker" "exec" (-> node :interface :container) "wg" "show" (-> node :interface :name)) :out
+           (str/split #"\n\n"))
+      (map #(str/split % #"\n"))
+      (map (fn [x] (map #(str/split % #": ") x)))
+      (drop 1)  ; drop interface record
+      (map (fn [x] (map #(drop 1 %) x)))  ; drop keys 
+      (mapv #(apply concat %))      (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
+  
+  
+  (peers-stat (first nodes))
+  
+ (->> (-> (sh "ssh" "root@95.164.88.156" "docker" "exec" "f6d6d9d" "wg" "show" "wg0") :out)
   
   
   (peers->db nodes)

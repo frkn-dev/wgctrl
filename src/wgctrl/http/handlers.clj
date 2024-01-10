@@ -28,7 +28,25 @@
    :headers {"Content-Type" "application/json; charset=utf-8"
              "Access-Control-Allow-Origin" "*"}})
 
-         
+(defn peers-stat [request]
+  (log/info (str "GET /peers-stat " request ))
+  {:body (json/generate-string (map #(stat/peers-stat %) nodes))
+   :code 200
+   :headers {"Content-Type" "application/json; charset=utf-8"
+             "Access-Control-Allow-Origin" "*"}})
+
+(defn peers-amount [request]
+  (log/info (str "GET /peers-amount " request ))
+  {:body (json/generate-string (mapcat #(vector {:node (:uuid %) 
+                                                 :hostname (:hostname %) 
+                                                 :location (:location %) 
+                                                 :type (:type %)
+                                                 :peers (stat/peers-amount %)}) nodes))
+   :code 200
+   :headers {"Content-Type" "application/json; charset=utf-8"
+             "Access-Control-Allow-Origin" "*"}})
+
+(-> nodes)
 (defn peer [req]
   (let [params (-> req :params keywordize-keys)
         location (keyword (or (:location params ) "all"))

@@ -29,7 +29,10 @@
                acc []]
           (if (empty? ps)
             acc
-            (recur (drop 2 ps) (conj acc {:node-id (:uuid node) :peer  (first (vals (first (take 2 ps)))) :ip (first (vals (second (take 2 ps))))}))))))))
+            (recur (drop 2 ps) 
+              (conj acc {:node-id (:uuid node)
+                         :peer  (first (vals (first (take 2 ps))))
+                         :ip (first (vals (second (take 2 ps))))}))))))))
 
 
 
@@ -37,18 +40,6 @@
   (defn delete-peer [^String endpoint ^String interface ^String peer]
     (-> (sh "ssh" endpoint "wg" "set" interface "peer" peer "remove") :out))
 
-
-  (defn peers-stat
-    "Gets real peers from WG interface "
-    [^String endpoint ^String interface]
-    (->> (-> (sh "ssh" endpoint "wg" "show" interface) :out
-           (str/split #"\n\n"))
-      (map #(str/split % #"\n"))
-      (map (fn [x] (map #(str/split % #": ") x)))
-      (drop 1)  ; drop interface record
-      (map (fn [x] (map #(drop 1 %) x)))  ; drop keys 
-      (mapv #(apply concat %))
-      (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
 
   (defn latest-peers [e i]
     (->> (-> (sh "ssh" e "wg" "show" i "latest-handshakes") :out

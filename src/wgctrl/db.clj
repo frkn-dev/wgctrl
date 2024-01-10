@@ -66,8 +66,7 @@
   (not(empty? (jdbc/find-by-keys db :peers {:peer peer}))))
 
 (defn peers->db [nodes]
-  (bulk-peer-insert db 
-    (mapcat #(->> (ssh/peers %) 
+  (bulk-peer-insert  (mapcat #(->> (ssh/peers %) 
                (remove peer-loaded?)) nodes )))
 
 (defn peer->db [peer]
