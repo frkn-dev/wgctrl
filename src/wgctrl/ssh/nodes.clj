@@ -8,7 +8,8 @@
 
 
 (defn register-node [node]
-  (ssh/run-remote-script-bb node "./scripts/node-register-wg.bb"))
+  (do (ssh/run-remote-script-sh-docker "./scripts/tweak-wg.sh")
+      (ssh/run-remote-script-bb node "./scripts/node-register-wg.bb")))
 
 (defn node-registered? [node]
   (let [{:keys [exit]} (ssh/run-remote-script-bb node "./scripts/node-registered-check.bb")]
