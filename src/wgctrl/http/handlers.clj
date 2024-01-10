@@ -7,7 +7,8 @@
     [wgctrl.cluster.nodes :refer [nodes locations node-by-uuid]]
     [wgctrl.cluster.peers :refer [addr! peer!]]
     [wgctrl.cluster.stat :as stat]
-    [wgctrl.ssh.peers :as ssh])
+    [wgctrl.ssh.peers :as ssh]
+    [wgctrl.db :as db])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 
@@ -57,7 +58,9 @@
           
           (let [peer (ssh/peer! node ip)]
             ;peer ip node-id
-            (peer! {:peer (:peer peer)  :ip (str ip "/32") :node-id (:uuid node)})
+            (do (log/info (str "--> Creating peer " (conj peer {:node-id (:uuid node)})))
+              (peer! {:peer (:peer peer)  :ip (str ip "/32") :node-id (:uuid node)})
+              (db/peer->db (conj peer {:node-id (:uuid node)})))
             (log/info (str "GET /peer?location=" location " - " peer  " " (str ip "/32")))
           
             {:code 200

@@ -20,7 +20,6 @@
   "Gets data from node or register node"
   [node]
   (let [{:keys [address user location dns weight active]} node]
-     (log/info  location dns weight)
     (if (node-registered? node) 
       (-> (sh "ssh" (str user "@" address) "cat" "/root/.wg-node2")
         :out
