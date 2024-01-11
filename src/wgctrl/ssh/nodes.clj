@@ -24,14 +24,16 @@
   [node]
   (let [{:keys [address user location dns weight active]} node]
     (if (node-registered? node) 
+      (do (log/info "Node registered " location address)
       (-> (sh "ssh" (str user "@" address) "cat" "/root/.wg-node2")
         :out
         (edn/read-string)
         (conj {:location location})
         (conj {:dns dns})
         (conj {:weight weight})
-        (conj {:active active }))
-      (do (register-node node)
+        (conj {:active active })))
+      (do (log/info "Node not registered, registering " location address )
+        (register-node node)
         (node-reg-data node)))))
 
 (defn restore-node [node]

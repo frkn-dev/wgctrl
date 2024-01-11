@@ -68,5 +68,4 @@
   (start)
   (mount/start #'wgctrl.config/config)
   
-  (-> config)
   )

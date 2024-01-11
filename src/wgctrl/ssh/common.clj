@@ -15,3 +15,4 @@
                          " 'docker exec -i' " (-> node :interface :container) 
                          " bash -s < " script " " args)]
     (sh "/bin/bash" "-c" remote-command)))
+
