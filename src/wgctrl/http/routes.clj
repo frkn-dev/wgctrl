@@ -12,6 +12,7 @@
   (GET "/stat" [] h/peers-amount)
   (GET "/peers/stat" [] h/peers-stat)
   (GET "/peers/active" [] h/peers-active)
+  (GET "/peers/live" [] h/peers-live)
   (GET "/locations" [] h/locs)
   (not-found "<h1>Page not found</h1>"))
 

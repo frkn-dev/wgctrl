@@ -39,6 +39,18 @@
    :headers {"Content-Type" "application/json; charset=utf-8"
              "Access-Control-Allow-Origin" "*"}})
 
+
+(defn peers-live [request]
+  (log/info (str "GET /peers/live " request ))
+  (let [peers (map #(stat/peers-amount %) nodes)]
+    {:body (json/generate-string  {:online (reduce + (map #(:live %) peers))
+                                   :tx_gb (/ (reduce + (map #(parse-long (:tx %)) peers)) 1024 1024 1024)
+                                   :rx_gb (/ (reduce + (map #(parse-long (:rx %)) peers)) 1024 1024 1024)
+                                   })
+     :code 200
+     :headers {"Content-Type" "application/json; charset=utf-8"
+               "Access-Control-Allow-Origin" "*"}}))
+
 (defn peers-active [request]
   (log/info (str "GET /peers/active " request ))
   {:body (json/generate-string (map #(stat/peers-alive (stat/peers-dump %)) nodes))
