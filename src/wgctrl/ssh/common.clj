@@ -9,7 +9,9 @@
   (let [remote-command (str "ssh "user "@" address " 'bb' < " script)]
     (sh "/bin/bash" "-c" remote-command)))
 
-(defn run-remote-script-sh-docker [node script ip]
-  (let [remote-command (str "ssh " (:user node) "@" (:endpoint node) " 'docker exec -i' " (-> node :interface :container) " bash -s < " script " " ip)]
+(defn run-remote-script-sh-docker [node script & rest]
+  (let [args (str/join " " rest)
+        remote-command (str "ssh " (:user node) "@" (:endpoint node) 
+                         " 'docker exec -i' " (-> node :interface :container) 
+                         " bash -s < " script " " args)]
     (sh "/bin/bash" "-c" remote-command)))
-

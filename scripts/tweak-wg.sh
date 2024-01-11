@@ -11,3 +11,5 @@ sed  -i 's|10.8.1.0/24|10.8.0.0/16|g' /opt/amnezia/start.sh
 # Restart WG 
 wg-quick down /opt/amnezia/wireguard/wg0.conf
 wg-quick up /opt/amnezia/wireguard/wg0.conf
+
+exit 0

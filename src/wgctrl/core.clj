@@ -10,13 +10,12 @@
     [wgctrl.cluster.nodes :refer [nodes]]
     [wgctrl.cluster.balancer :refer [balancers]]
     [wgctrl.db :as db]
-    [wgctrl.nrepl :refer [nrepl-server]]))
+    [wgctrl.nrepl :refer [nrepl-server]]
+    [wgctrl.ssh.nodes :refer [restore-node]]))
 
-    
 
 
 (defn -main []
-  
   (with-logging-status)
   (mount/start #'wgctrl.config/config
     #'wgctrl.cluster.nodes/nodes
@@ -31,10 +30,13 @@
   
   (if (db/table-exist? db/table-name)
     (do (info "Table already exist, skip") nil)
-    (do (info "Creating table") 
+    (do (info "Creating table" db/table-name) 
       (jdbc/db-do-commands db/db db/table-query)))
   
   (do (info "Updating DB")
     (db/peers->db nodes))
-  )
+  
+  (do (info "Restore nodes from State")
+    (for [node nodes]
+      (restore-node node ))))
 

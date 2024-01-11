@@ -1,5 +1,8 @@
 (ns wgctrl.cluster.ipcalc
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+    [clojure.spec.alpha :as s]
+    [clojure.edn :as edn]
+    [clojure.test.check.generators :as gen])
   (:import java.net.InetAddress)
   (:import java.net.Inet4Address))
 
@@ -77,14 +80,34 @@
 
 (defn addr
   "Cuts address of subnet from mask"
-  [subnet]
-  (if (nil? subnet)
-    nil
-    (->>
-      (str/split subnet #"/")
-      first)))
+  [ip]
+  (if (not(nil? (str/index-of ip "/") ))
+    (first (str/split ip #"/"))
+    (if (not(nil? (str/index-of ip ":")))
+      (first (str/split ip #":"))
+      nil)))
 
 (defn size
   "Calculates size of subnet by mask"
   [mask]
   (- (Math/pow 2 (- 32 mask)) 2))  
+
+(s/def ::ip-address
+  (letfn [(pred [s]
+            (if (nil? s)
+              nil
+            (let [parts (str/split s #"\.")]
+              (and (= (count parts) 4)
+                (every? (fn [part]
+                          (try
+                            (let [n (edn/read-string part)]
+                              (and (integer? n)
+                                (>= 256 n 0)))
+                            (catch Exception _ false)))
+                  parts)))))
+          (gen []
+            (gen/fmap (partial str/join ".") (gen/vector (gen/choose 0 255) 4)))]
+    (s/spec pred :gen gen)))
+
+(defn ip-address? [ip]
+  (s/valid? ::ip-address ip))

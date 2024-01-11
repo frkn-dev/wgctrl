@@ -5,7 +5,7 @@
     [clojure.core.async :refer [<!!]]
     [wgctrl.cluster.balancer :refer [balancers]]
     [wgctrl.cluster.nodes :refer [nodes locations node-by-uuid]]
-    [wgctrl.cluster.peers :refer [addr! peer!]]
+    [wgctrl.cluster.peers :refer [addr!]]
     [wgctrl.cluster.stat :as stat]
     [wgctrl.ssh.peers :as ssh]
     [wgctrl.db :as db])
@@ -21,22 +21,15 @@
                "Access-Control-Allow-Origin" "*"}}))
 
 
-(defn stat [request]
-  (log/info (str "GET /stat " request ))
-  {:body (json/generate-string (stat/node-stat nodes))
-   :code 200
-   :headers {"Content-Type" "application/json; charset=utf-8"
-             "Access-Control-Allow-Origin" "*"}})
-
 (defn peers-stat [request]
-  (log/info (str "GET /peers-stat " request ))
+  (log/info (str "GET /peers/stat " request ))
   {:body (json/generate-string (map #(stat/peers-stat %) nodes))
    :code 200
    :headers {"Content-Type" "application/json; charset=utf-8"
              "Access-Control-Allow-Origin" "*"}})
 
 (defn peers-amount [request]
-  (log/info (str "GET /peers-amount " request ))
+  (log/info (str "GET /peers/amount " request ))
   {:body (json/generate-string (mapcat #(vector {:node (:uuid %) 
                                                  :hostname (:hostname %) 
                                                  :location (:location %) 
@@ -46,7 +39,14 @@
    :headers {"Content-Type" "application/json; charset=utf-8"
              "Access-Control-Allow-Origin" "*"}})
 
-(-> nodes)
+(defn peers-active [request]
+  (log/info (str "GET /peers/active " request ))
+  {:body (json/generate-string (map #(stat/peers-alive (stat/peers-dump %)) nodes))
+   :code 200
+   :headers {"Content-Type" "application/json; charset=utf-8"
+             "Access-Control-Allow-Origin" "*"}})
+
+
 (defn peer [req]
   (let [params (-> req :params keywordize-keys)
         location (keyword (or (:location params ) "all"))
@@ -75,11 +75,9 @@
 
           
           (let [peer (ssh/peer! node ip)]
-            ;peer ip node-id
-            (do (log/info (str "--> Creating peer " (conj peer {:node-id (:uuid node)})))
-              (peer! {:peer (:peer peer)  :ip (str ip "/32") :node-id (:uuid node)})
+            (do (log/info (str "--> Generating peer " (conj (dissoc peer :private) {:node-id (:uuid node)})))
               (db/peer->db (conj peer {:node-id (:uuid node)})))
-            (log/info (str "GET /peer?location=" location " - " peer  " " (str ip "/32")))
+            (log/info (str "GET /peer?location=" location " - " (dissoc peer :private) ))
           
             {:code 200
              :headers {"Content-Type" "application/json; charset=utf-8"

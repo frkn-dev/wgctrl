@@ -7,6 +7,10 @@
     [mount.tools.graph :refer [states-with-deps]]
     [wgctrl.logging :refer [with-logging-status]]
     [clojure.java.jdbc :as jdbc]
+    [clojure.edn :as edn]
+    [clojure.tools.logging :refer [info]]
+    [clojure.spec.alpha :as s]
+    [clojure.test.check.generators :as gen]
     
     
     [wgctrl.config :refer [config]]
@@ -23,16 +27,14 @@
     [wgctrl.ssh.nodes :as ssh-nodes]
     [wgctrl.ssh.peers :as ssh-peers]))
 
-
-
 (defn start []
   (with-logging-status)
   (mount/start #'wgctrl.config/config
-               #'wgctrl.cluster.nodes/nodes
-               #'wgctrl.cluster.balancer/balancers
-               #'wgctrl.db/db
-               #'wgctrl.http.api/api-server
-               #'wgctrl.nrepl/nrepl-server))
+    #'wgctrl.cluster.nodes/nodes
+    #'wgctrl.cluster.balancer/balancers
+    #'wgctrl.db/db
+    #'wgctrl.http.api/api-server
+    #'wgctrl.nrepl/nrepl-server))
 
 (defn stop []
   (mount/stop))
@@ -62,82 +64,115 @@
 
 
 
-
-
-
-
-
 (comment 
-   (start)
-   (reset)
+  (start)
+  (mount/start #'wgctrl.config/config)
   
-  (first nodes)
+  (-> config)
   
-  (defn peers-stat
-    "Gets real peers from WG interface "
-    [node]
-    (->> (-> (sh "ssh" (str (:user node) "@" (:endpoint node)) "docker" "exec" (-> node :interface :container) "wg" "show" (-> node :interface :name)) :out
-           (str/split #"\n\n"))
-      (map #(str/split % #"\n"))
-      (map (fn [x] (map #(str/split % #": ") x)))
-      (drop 1)  ; drop interface record
-      (map (fn [x] (map #(drop 1 %) x)))  ; drop keys 
-      (mapv #(apply concat %))      (map #(zipmap [:peer :psk :endpoint :allowed :latest :traffic] %))))
+  (s/def ::ip-address
+    (letfn [(pred [s]
+              (let [parts (str/split s #"\.")]
+                (and (= (count parts) 4)
+                  (every? (fn [part]
+                            (try
+                              (let [n (edn/read-string part)]
+                                (and (integer? n)
+                                  (>= 256 n 0)))
+                              (catch Exception _ false)))
+                    parts))))
+            (gen []
+              (gen/fmap (partial str/join ".") (gen/vector (gen/choose 0 255) 4)))]
+      (s/spec pred :gen gen)))
+  
+  (defn )
+  
+  (s/valid? ::ip-address (ip/addr "10.8.1.22/32"))
+  
+  (def peers1 (ssh-peers/peers (first nodes)))
+  
+  (-> peers1 first )
+  
+  (ip/addr "10.0.0.1/32")
+  
+  (defn valid-peers [peers]
+    (filter #(s/valid? ::ip-address (ip/addr (:ip %))) peers))
+  
+ (-> (valid-peers peers1))
+  
+
+  
+  (defn register-node [node]
+    (do (ssh/run-remote-script-sh-docker node "./scripts/tweak-wg.sh")
+      (ssh/run-remote-script-bb node "./scripts/node-register-wg.bb")))
+
+  
+
+  (jdbc/query db/db "select * from peers")
+  
+  (defn restore-node [node]
+    (let [id (:uuid node)
+          exist-peers (mapv #(:peer %) (ssh-peers/peers node))
+          peers (jdbc/find-by-keys db/db :peers {:node_id id})]
+      (let [peers' (map #(:peer %) (vec (clojure.set/difference 
+                                          (set (map #(select-keys % [:peer]) peers))
+                                          (set (map #(hash-map :peer %) exist-peers)))))]
+        (for [peer peers']
+          (let [peer' (first (jdbc/find-by-keys db/db :peers {:peer peer}))]
+            (ssh-peers/restore! node (:peer peer') (:ip peer')))))))
   
   
-  (peers-stat (first nodes))
+  (defn restore-node2 [node]
+    (let [id (:uuid node)
+          exist-peers (mapv #(:peer %) (ssh-peers/peers node))
+          peers (jdbc/find-by-keys db/db :peers {:node_id id})]
+      (let [peers' (map #(:peer %) (vec (clojure.set/difference 
+                                          (set (map #(select-keys % [:peer]) peers))
+                                          (set (map #(hash-map :peer %) exist-peers)))))]
+        peers
+        )))
   
- (->> (-> (sh "ssh" "root@95.164.88.156" "docker" "exec" "f6d6d9d" "wg" "show" "wg0") :out)
+  (restore-node2 (first nodes))
+  
+ (restore-node (first nodes))
+  
+  (mapv #(:peer %) (ssh-peers/peers (first nodes)))
   
   
-  (peers->db nodes)
+  (db/peer! {:peer "TEST" :node-id "7dfbbeec-79a7-4261-8f47-2e546c8ab35a" :ip "IP"})
   
-  (-> nodes)
-  (-> balancers)
-  
-  ()
-  
- (filter #(empty? (jdbc/find-by-keys db/db :peers {:peer (:peer %)})) (ssh-peers/peers (first nodes)))
-  
-  (count (jdbc/query db/db "Select * from peers"))
-  
-  (map #(jdbc/find-by-keys db/db :peers {:peer %}) (ssh-peers/peers (first nodes)))
-  
-  (filter odd? [1 2 3 4 5 6])
-  
-  (ssh-peers/peers (first nodes))
-  
-(first (jdbc/query db/db "SELECT * from peers"))
-  
-  {:node-id "2ab657cd-1301-4699-aeb4-785d4cb1fc1a", :peer "mmJ5z1W7pjwZujEtok3YKFNAQGkOE8Rg7uHOq3H3NV0=", :ip "10.8.1.57/32"}
-  
-  (jdbc/find-by-keys db/db :peers {:peer "mmJ5z1W7pjwZujEtok3YKFNAQGkOE8Rg7uHOq3H3NV0="})
+  (jdbc/find-by-keys db/db :peers {:node_id (-> nodes first :uuid)})
   
   (-> db/db)
   
-  (peers-state nodes )
+  (-> config)
   
-  (-> nodes)
+(defn table-exist? [t]
+  (try
+    (jdbc/query db/db (str "SELECT * FROM " t))
+    true
+    (catch Exception e
+      false)))  
   
-  (mapcat #(remove peer-loaded? (ssh-peers/peers %)) nodes)
+  (table-exist? "peers")
   
+  (ssh/run-remote-script-sh-docker (first nodes) "./scripts/restore-peer.sh" "uPp/X7kACLWn4eeMQs/hhTrprnhJ7xyEU94iKxlI9ho=" "10.8.1.9/32")
   
-  (db/bulk-peer-insert db/db  (mapcat #(->> (ssh-peers/peers %) 
-                (remove peer-loaded?))  nodes ))
+  (ssh-nodes/restore-node (first nodes ))
   
- 
-   (remove #(peer-loaded? %) (ssh-peers/peers (first nodes)))
- 
-  (peer-loaded? "mmEU2aFFHu7IJTa9e+94J8mLSrb0qRl3xRIUZXaGGTA=")
+  (jdbc/query db/db "SELECT * FROM peers")
   
-  (remove even? [1 2 3 4 5 6 7 8])
-  
-  (jdbc/query db/db "Select * from peers")
-  
-  {:peer "mmEU2aFFHu7IJTa9e+94J8mLSrb0qRl3xRIUZXaGGTA=", :id 1, :node_id "2ab657cd-1301-4699-aeb4-785d4cb1fc1a", :created_at "1704848147805", :ip "10.8.1.122/32"}
- 
-(first   (ssh-peers/peers (first nodes)))
-  
-  {:node-id "2ab657cd-1301-4699-aeb4-785d4cb1fc1a", :peer "13K4n9NXX+nwaI7AKFs81Yzh+fS27cN1M4/llU1ISFk=", :ip "10.8.1.94/32"}
+ (frequencies (map #(ip/addr (:ip %)) (jbc/find-by-keys db/db :peers {:node_id (:uuid (first nodes))})))
 
- )
+(-> db/db)
+
+  
+ (frequencies(set (map #(:ip %) (jdbc/find-by-keys db/db :peers {:node_id (:uuid (first nodes))})))
+  
+  
+  
+  (ssh-peers/valid-peers (jdbc/find-by-keys db/db :peers {:node_id (:uuid (first nodes))}))
+  
+  (ssh-peers/valid-peers (ssh-peers/peers (first nodes)))
+
+  )

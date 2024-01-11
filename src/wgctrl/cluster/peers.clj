@@ -15,12 +15,12 @@
 (defn restore-peers [nodes]
   (reduce (fn [acc p] (conj acc (peer! p))) [] (mapcat #(ssh/peers %) nodes)))
 
+
+
 (defn addr!
   "Calculates available IP address for peer"
   [node]
   
-  (log/info "Node " node)
-
   (let [subnet (-> node :interface :subnet)
         peers' (restore-peers [node])
         amount (count peers')

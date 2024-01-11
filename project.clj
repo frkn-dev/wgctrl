@@ -12,7 +12,9 @@
                  [mount "0.1.16"]
                  [org.clojure/tools.namespace "1.4.4"]
                  [org.clojure/java.jdbc "0.7.12"]
-                 [org.xerial/sqlite-jdbc "3.42.0.0"]]
+                 [org.xerial/sqlite-jdbc "3.42.0.0"]
+                 [org.clojure/clojure "1.11.1"]
+                 [org.clojure/test.check "0.10.0"]]
   :plugins [[lein-cljfmt "0.9.0"]]                              
   :main ^:skip-aot wgctrl.core
   :target-path "target/%s"

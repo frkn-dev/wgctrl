@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ip=$1
-psk=$2 
 
 mkdir -p /opt/keys 
 cd /opt/keys
@@ -16,6 +15,17 @@ wg genkey > key-${postfix}
 wg pubkey < key-${postfix} > key-${postfix}.pubkey
 
 wg set wg0 peer $(cat key-${postfix}.pubkey) preshared-key $psk allowed-ips $ip
+wg_exit_status=$?
 
-echo -n {:private \"$(cat key-${postfix})\" :peer \"$(cat key-${postfix}.pubkey)\" :ip \"$ip\"}
+if [ $wg_exit_status -eq 0 ]; then
+    echo -n {:private \"$(cat key-${postfix})\" :peer \"$(cat key-${postfix}.pubkey)\" :ip \"$ip\"}
+else
+    echo -n {:error \"Error - wg command failed for peer $peer\"  :status \"$wg_exit_status\"}
+fi
+
+exit $wg_exit_status
+
+
+
+
 

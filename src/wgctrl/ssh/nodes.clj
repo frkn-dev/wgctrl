@@ -2,14 +2,16 @@
   (:require [clojure.edn :as edn]
     [clojure.java.shell :refer [sh]]
     [clojure.string :as str]
+    [clojure.tools.logging :as log]
+    [clojure.java.jdbc :as jdbc]
     [wgctrl.ssh.common :as ssh]
-    [clojure.tools.logging :as log])
+    [wgctrl.ssh.peers :as ssh-peers]
+    [wgctrl.db :as db])
   (:use [clojure.walk :only [keywordize-keys]]))
 
 
 (defn register-node [node]
-  (do (ssh/run-remote-script-sh-docker "./scripts/tweak-wg.sh")
-      (ssh/run-remote-script-bb node "./scripts/node-register-wg.bb")))
+    (ssh/run-remote-script-bb node "./scripts/node-register-wg.bb"))
 
 (defn node-registered? [node]
   (let [{:keys [exit]} (ssh/run-remote-script-bb node "./scripts/node-registered-check.bb")]
@@ -31,6 +33,19 @@
         (conj {:active active }))
       (do (register-node node)
         (node-reg-data node)))))
+
+(defn restore-node [node]
+  (let [id (:uuid node)
+        exist-peers (mapv #(:peer %) (ssh-peers/valid-peers (ssh-peers/peers node)))
+        peers (jdbc/find-by-keys db/db :peers {:node_id id})]
+    (let [peers' (map #(:peer %) (vec (clojure.set/difference 
+                                            (set (map #(select-keys % [:peer]) (ssh-peers/valid-peers peers)))
+                                            (set (map #(hash-map :peer %) exist-peers)))))]
+      (for [peer peers']
+        (let [peer' (first (jdbc/find-by-keys db/db :peers {:peer peer}))]
+          (log/info "Restoring peer " peer')
+          (ssh-peers/restore! node (:peer peer') (:ip peer'))))
+      nil)))
 
 
 

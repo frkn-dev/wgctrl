@@ -5,12 +5,7 @@
     [wgctrl.logging :refer [with-logging-status]]
     [wgctrl.ssh.peers :as ssh]))
 
-(def spec
-  {:classname   "org.sqlite.JDBC"
-   :subprotocol "sqlite"
-   :subname     ":memory:"})
-
-(def db-uri "jdbc:sqlite::memory:")
+(def db-uri "jdbc:sqlite:db/database.db" )
 
 (declare db)
 
@@ -28,8 +23,6 @@
   db
   :start (on-start)
   :stop (on-stop))
-
-(mount/start #'wgctrl.db/db)
 
 (def table-name "peers")
 
@@ -66,8 +59,9 @@
   (not(empty? (jdbc/find-by-keys db :peers {:peer peer}))))
 
 (defn peers->db [nodes]
-  (bulk-peer-insert  (mapcat #(->> (ssh/peers %) 
-               (remove peer-loaded?)) nodes )))
+  (let [peers' (mapcat #(->> (ssh/peers %) 
+                          (remove peer-loaded?)) nodes )]
+    (bulk-peer-insert  (ssh/valid-peers peers'))))
 
 (defn peer->db [peer]
   (if (peer-loaded? peer)
